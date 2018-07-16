@@ -182,10 +182,12 @@ obtained_parameters = params[0]
 
 root = os.path.abspath('cmaes_results')
 cmaes_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-cmaes.txt')
-
+"""
 with open(cmaes_filename, 'w') as f:
     for x in obtained_parameters:
         f.write(pints.strfloat(x) + '\n')
+"""
+np.savetxt(cmaes_filename, obtained_parameters)
 
 print ('CMAES fitting is done for model', args.model)
 #
