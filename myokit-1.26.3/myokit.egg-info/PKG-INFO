@@ -1,0 +1,63 @@
+Metadata-Version: 1.0
+Name: myokit
+Version: 1.26.3
+Summary: A simple interface to cardiac cellular electrophysiology
+Home-page: http://myokit.org
+Author: Michael Clerx
+Author-email: michael@myokit.org
+License: Myokit
+Copyright 2011-2018 Maastricht University, University of Oxford
+michael@myokit.org
+
+Myokit is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+Myokit is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+
+For a copy of the GNU General Public License,
+see http://www.gnu.org/licenses/.
+
+Description-Content-Type: UNKNOWN
+Description: Myokit
+        ======
+        
+        Myokit is a free piece of software that facilitates modeling and simulation in
+        cardiac cellular electrophysiology.
+        
+        For details and downloads, see http://myokit.org
+        
+        For the latests documentation, see http://docs.myokit.org
+        
+        Quick-start guide
+        -----------------
+        
+        To quickly test if myokit is running, open a terminal or command window,
+        navigate to the myokit directory and type
+        
+            python myo run example
+            
+        To open an IDE window, type
+        
+            python myo
+            
+        To see what else the "myo" script can do, type
+        
+            python myo -h
+        
+        Adding icons etc.
+        -----------------
+        If you're a Gnome or KDE user, you may wish to install a Myokit icon to your
+        menu, add the mime-type information for myokit mmt files or add syntax
+        highlighting for gtksourceview (gedit). Scripts to do this are located in
+            
+            ./install/gnome-kde
+        
+        Windows users can install icons using the Myokit installer, available on
+         http://myokit.org
+        
+Platform: UNKNOWN

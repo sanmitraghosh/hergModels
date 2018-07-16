@@ -1,0 +1,26 @@
+#!/usr/bin/env python2
+#
+# Show pr1 and pr2 stats: sim vs real
+#
+from __future__ import division
+from __future__ import print_function
+import numpy as np
+import matplotlib.pyplot as plt
+
+steps1 = [3, 10, 30, 100, 300, 1000]
+
+simpr1 = [0.0044506921786099714, 0.0077452832336163029, 0.0076334690858206496, 0.017351239531598932, 0.050519080013724606, 0.15487275401333769]
+simpr2 = [0.10107031255731719, 0.13769245988256676, 0.057800494696414878, 0.090878809739260227, 0.18094058411826772, 0.23378195926627368]
+
+steps2 = steps1[1:]
+
+cell5pr1 = [-0.0047271954262857159, -0.002654919819142859, 0.0050385643594285691, 0.050960215145142859, 0.20375691521657141]
+cell5pr2 = [-0.0085487902529999948, -0.00087558575299999386, 0.059546931604142858, 0.14795283210414287, 0.20210426924700001]
+
+plt.figure()
+plt.plot(steps1, simpr1, 'x-', label='Pr1 sim')
+plt.plot(steps2, cell5pr1, 'o-', label='Pr1 cell 5')
+plt.plot(steps1, simpr2, 'x-', label='Pr2 sim')
+plt.plot(steps2, cell5pr2, 'o-', label='Pr2 cell 5')
+plt.legend()
+plt.show()

@@ -1,0 +1,16 @@
+kylies-solution.txt
+
+    Matlab export of Kylie's solution
+
+solution1.txt
+
+    Older solution, with bounds 1e0 and high tolerance (I think)
+
+solution2.txt
+
+    Recent solution, with bounds 1e3 and 1e-8 tolerance
+    Doesn't seem to work
+
+solution3.txt
+
+    New solution with Kylie's prior

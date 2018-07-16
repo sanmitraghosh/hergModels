@@ -1,0 +1,17 @@
+Nice editorial! Would have been nice to have some older references in it maybe, like Fink&Noble or some of the older critiques on traditional patch clamp analysis (e.g. Willms 1999)
+She calls it a clever method though :smile:
+gary [2:06 PM]
+Hadn't properly looked at that Willms paper before. Seems to do 2 of our 4 ways of making a model, with simulated data?
+'Disjoint' is a nice way of thinking about the pretend it is fully active etc. methods
+michael [2:12 PM]
+Yes I like 'disjoint' too but stopped using that terminology as nobody else does!
+I think we're still different enough though, as Willms seems to focus entirely on quality of fit and we're more interested in validation? Plus the simulated data thing
+There's a 2002 paper where he introduces NEUROFIT, a piece of software for whole trace fitting, that one does have experimental data in it
+Lee, Smaill, (Nicolas) Smith 2006 concludes "Further, we emphasize that the key principal behind the outlined technique—i.e. of avoiding partial fittings to linearized forms of the model—can lead to significantly higher accuracy when applied at whole channel level and is easily extendable to more complicated channel equations." (edited)
+Buhry 2011 say "We propose a new estimation method for the characterization of the Hodgkin-Huxley formalism. This method is an alternative technique to the classical estimation methods associated with voltage clamp measurements. It uses voltage clamp type recordings, but is based on the differential evolution algorithm. The parameters of an ionic channel are estimated simultaneously, such that the usual approximations of classical methods are avoided and all the parameters of the model, including the time constant, can be correctly optimized."By which they mean they optimise the sum of squares error with a genetic algorithm
+michael [2:26 PM]
+y favourite is Hafner 1981, who just shows it's possible to use optimisation and monte-carlo methods, as long as you have the sensitivities. He advises against using a Telefunken-computer TR 445, and wishes he'd used a CDC CYBER 72/76 instead. (That is honestly the 2-nd last sentence in the article)
+
+Optimisation methods
+Genetic algorithm --> Heijman 2011, GA and Nelder-Mead (Silva 2005 fits biexp to model!, Heijman 2009 does similar things),
+Hybrid PSO --> Axel Loewe

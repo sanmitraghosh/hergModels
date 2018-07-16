@@ -1,0 +1,4 @@
+Iter.  Eval.  Accept.   Accept.   Accept.   Time m:s
+0      3       0         0         0          0:02.9
+1      6       0         0         0          0:06.0
+2      9       0.333     0         0          0:09.0
