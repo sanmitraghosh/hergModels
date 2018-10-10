@@ -78,7 +78,7 @@ class ForwardModel(pints.ForwardModel):
             self.simulation.set_max_step_size(0.1)
 
         # Set solver tolerances to values used by Kylie
-        self.simulation.set_tolerance(1e-9, 1e-9)
+        self.simulation.set_tolerance(1e-8, 1e-8)
 
 	# Don't log transform params unless specified
 	if logTransform:
@@ -112,7 +112,7 @@ class ForwardModel(pints.ForwardModel):
                 log = ['engine.time', 'ikr.IKr', 'membrane.V'],
                 ).npview()
         except myokit.SimulationError:
-	    print('Mypkit Stuck')
+	    #print('Mypkit Stuck')
             return times * float('inf')
 
         # Store membrane potential for debugging
@@ -193,6 +193,25 @@ class LogPrior(pints.LogPrior):
             if debug: print('Upper')
             return self.minf
 
+        # Calculate area of forward and reverse priors
+        n = 1e3
+        a = np.linspace(self.lower_alpha, self.upper_alpha, n)
+        f_bmin = (1 / self.vmax) * (np.log(self.rmin) - np.log(a))
+        f_bmax = (1 / self.vmax) * (np.log(self.rmax) - np.log(a))
+        f_bmin = np.maximum(f_bmin, self.lower_beta)
+        f_bmax = np.minimum(f_bmax, self.upper_beta)
+
+        r_bmin = (-1 / self.vmin) * (np.log(self.rmin) - np.log(a))
+        r_bmax = (-1 / self.vmin) * (np.log(self.rmax) - np.log(a))
+        r_bmin = np.maximum(r_bmin, self.lower_beta)
+        r_bmax = np.minimum(r_bmax, self.upper_beta)       
+
+        adiff = a[1:] - a[:-1]
+        f_bdiff = (f_bmax - f_bmin)[:-1]
+        r_bdiff = (r_bmax - r_bmin)[:-1]
+        f_area = np.sum(f_bdiff * adiff)
+        r_area = np.sum(r_bdiff * adiff)
+
         # Check rate constant boundaries
         
 	p1, p2, p3, p4, p5, p6, p7, p8, p9 = parameters
@@ -203,20 +222,22 @@ class LogPrior(pints.LogPrior):
             return self.minf
         r = p5 * np.exp(p6 * self.vmax)
         if r < self.rmin or r > self.rmax:
-            if debug: print('r2')
+            if debug: print('r3')
             return self.minf
-
+        f_lp = 2*np.log(1/f_area)
+        
         # Check backward rates
         r = p3 * np.exp(-p4 * self.vmin)
         if r < self.rmin or r > self.rmax:
-            if debug: print('r3')
+            if debug: print('r2')
             return self.minf
         r = p7 * np.exp(-p8 * self.vmin)
         if r < self.rmin or r > self.rmax:
             if debug: print('r4')
             return self.minf
-
-        return 0
+        r_lp = 2*np.log(1/r_area)
+        
+        return f_lp + r_lp
 
     def _sample_partial(self, v):
         for i in xrange(100):

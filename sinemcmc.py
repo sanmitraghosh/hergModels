@@ -23,9 +23,9 @@ parser.add_argument('--model', type=int, default=1, metavar='N', \
       help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
 parser.add_argument('--plot', type=bool, default=False, metavar='N', \
       help='plot fitted traces' )
-parser.add_argument('--niter', type=int, default=1, metavar='N', \
+parser.add_argument('--niter', type=int, default=100000, metavar='N', \
       help='number of mcmc iterations' )
-parser.add_argument('--burnin', type=int, default=1, metavar='N', \
+parser.add_argument('--burnin', type=int, default=50000, metavar='N', \
       help='number of burn-in samples')
 args = parser.parse_args()
 sys.path.append(os.path.abspath('models_forward'))
@@ -49,6 +49,11 @@ elif args.model == 4:
 	import linearCCCOI as forwardModel
 	print("loading  C-C-C-O-I model")
 	model_name ='model-4'
+
+elif args.model == 5:
+	import circularCCOIICIC as forwardModel
+	print("loading  C-C-O-I-IC-IC model")
+	model_name ='model-5'
 
 cell = args.cell
 #
@@ -108,8 +113,9 @@ log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 #
 initial_parameters = forwardModel.fetch_parameters()
 # Create sampler
-nchains = 2
-x0 = [initial_parameters] * nchains
+nchains = 1
+npar = log_prior.n_parameters()
+x0 = [initial_parameters] * nchains #+ np.random.uniform(0,1e-5,npar)
 
 mcmc = pints.MCMCSampling(log_posterior, nchains, x0, method=pints.PopulationMCMC)
 #mcmc.set_log_to_file('log.txt')
@@ -133,7 +139,7 @@ burnin = args.burnin
 samples_all_chains = trace[:, burnin:, :]
 sample_chain_1 = samples_all_chains[0]
 
-npar = log_prior.n_parameters()
+
 plot = args.plot
 print(plot)
 # Plot 

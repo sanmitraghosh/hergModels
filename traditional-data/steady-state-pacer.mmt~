@@ -1,0 +1,5 @@
+[[protocol]]
+# get steady state probabilities
+# Level Start   Length  Period  Multiplier
+-80     0.0     8000.0   0       0
+

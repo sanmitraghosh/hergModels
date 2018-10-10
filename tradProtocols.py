@@ -62,10 +62,13 @@ def run_model(model, cell, protocol, time, voltage, current, plot='unfold', labe
             model_name = 'circularCOIIC'
             axes[1].plot(time, simulated, alpha= 1, color= 'blue', label=model_name)
         elif label == 1:
-            model_name = 'linearCO'
+            model_name = 'linearCOI'
             axes[1].plot(time, simulated, alpha= 1, color= 'magenta', label=model_name)
         elif label == 2:
-            model_name = 'linearCOI'
+            model_name = 'linearCCOI'
+            axes[1].plot(time, simulated, alpha= 1, color= 'seagreen', label=model_name)
+        elif label == 3:
+            model_name = 'linearCCCOI'
             axes[1].plot(time, simulated, alpha= 1, color= 'seagreen', label=model_name)
     	#axes.subplot(2,1,1)
 
@@ -138,11 +141,12 @@ if __name__=="__main__":
     else:
         #sys.path.append(os.path.abspath('models_forward'))
         import circularCOIIC as IkrModel1
-        import linearCO as IkrModel2
-        import linearCOI as IkrModel3
+        import linearCOI as IkrModel2
+        import linearCCOI as IkrModel3
+        import linearCCCOI as IkrModel4
 
 
-        models = [IkrModel1,IkrModel2,IkrModel3]
+        models = [IkrModel1,IkrModel2,IkrModel3,IkrModel4]
         fig, ax = plt.subplots(nrows=2, ncols=1)
         for label, model_ikr in enumerate(models):
             print(model_ikr)

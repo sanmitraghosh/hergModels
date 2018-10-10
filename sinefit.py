@@ -25,33 +25,38 @@ parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
 parser.add_argument('--model', type=int, default=1, metavar='N', \
       help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
-parser.add_argument('--plot', type=bool, default=False, metavar='N', \
+parser.add_argument('--plot', type=bool, default=True, metavar='N', \
       help='plot fitted traces' )
 args = parser.parse_args()
-sys.path.append(os.path.abspath('models_forward'))
 
-if args.model == 1:	
-	import circularCOIIC as forwardModel
-	model_name ='model-1'
-	print("loading  C-O-I-IC model")
+#
+# Find out the full HH models. NB for these ones our Markov builder doesn't work
+#
+
+if args.model == 3 or args.model == 9 or args.model == 19:
+	model_name ='model-'+str(args.model)
+	root = os.path.abspath('models_myokit')
+	model_file = os.path.join(root, 'modelFullHH-'+str(args.model)+'.mmt')
+	myo_model = myokit.load_model(model_file)
+	sys.path.append(os.path.abspath('models_forward'))
+	import pintsForwardModel as forwardModel
+	n_params = 4
+	print("loading  full HH model: " + str(args.model))
 	
-elif args.model == 2:
-	import linearCOI as forwardModel
-	model_name ='model-2'
-	print("loading  C-O-I model")
-
-elif args.model == 3:
-	import linearCCOI as forwardModel
-	print("loading  C-C-O-I model")
-	model_name ='model-3'
-
-elif args.model == 4:
-	import linearCCCOI as forwardModel
-	print("loading  C-C-C-O-I model")
-	model_name ='model-4'
+else:
+	# Import markov models from the models file
+	model_name ='model-'+str(args.model)
+	root = os.path.abspath('models_myokit')
+	sys.path.append(os.path.abspath('models_forward'))
+	from models import *
+	import pintsForwardModel as forwardModel
+	import LogPrior as prior
+	model = 'Model'+str(args.model)
+	myo_model, rate_dict_maker, n_params = globals()[model]()
+	print("loading  model: "+str(args.model))
+	model_name ='model-'+str(args.model)
 
 cell = args.cell
-
 
 #
 # Select data file
@@ -108,7 +113,7 @@ time, voltage, current = forwardModel.capacitance(
 #
 # Create forward model
 #
-model = forwardModel.ForwardModel(protocol, temperature, sine_wave=True, logTransform=True)
+model = forwardModel.ForwardModel(protocol, temperature, myo_model, n_params, sine_wave=True, logTransform=True)
 
 
 
@@ -123,7 +128,7 @@ problem = pints.SingleOutputProblem(model, time, current)
 # Define log-posterior
 #
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = forwardModel.LogPrior(lower_conductance, logTransform=True)
+log_prior = prior.LogPrior(rate_dict_maker, lower_conductance, n_params, logTransform=True)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 
 
@@ -133,9 +138,10 @@ params, scores = [], []
 for i in xrange(repeats):
 	# Choose random starting point
 	x0 = log_prior.sample()
-	
+	print(x0)
 	# Create optimiser and log transform parameters
 	x0=np.log(x0)
+	
 	#x0[0],x0[2],x0[4],x0[6] =np.log([x0[0],x0[2],x0[4],x0[6]])
 	
 	opt = pints.Optimisation(log_posterior, x0, method=pints.CMAES)
@@ -182,12 +188,10 @@ obtained_parameters = params[0]
 
 root = os.path.abspath('cmaes_results')
 cmaes_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-cmaes.txt')
-"""
+
 with open(cmaes_filename, 'w') as f:
     for x in obtained_parameters:
         f.write(pints.strfloat(x) + '\n')
-"""
-np.savetxt(cmaes_filename, obtained_parameters)
 
 print ('CMAES fitting is done for model', args.model)
 #
@@ -200,12 +204,12 @@ plot = args.plot
 print(plot)
 if plot:
 	root = os.path.abspath('figures/cmaesfit')
-	fig_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-cmaes.eps')
-	model = forwardModel.ForwardModel(protocol, temperature, sine_wave=True, logTransform=False)
+	fig_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-cmaes_test.eps')
+	model = forwardModel.ForwardModel(protocol, temperature, myo_model, n_params, sine_wave=False, logTransform=False)
 	
 	plt.figure()
 	plt.subplot(2,1,1)
-	plt.plot(time, voltage)
+	#plt.plot(time, voltage)
 	plt.subplot(2,1,2)
 	plt.plot(time, current, label='real')
 	plt.plot(time, model.simulate(obtained_parameters, time), label='fit')
