@@ -34,12 +34,12 @@ protocol = myokit.load_protocol(protocol_file)
 time = np.arange(0,8000,0.1)
 
 
-
-root = os.path.abspath('models_myokit')
 sys.path.append(os.path.abspath('models_forward'))
+root = os.path.abspath('models_myokit')
+
 from models import *
 import pintsForwardModel as forwardModel
-
+import LogPrior as prior
 model = 'Model'+str(1)
 myo_model, rate_dict_maker, n_params = globals()[model]()
 print("loading  model: "+str(1))
