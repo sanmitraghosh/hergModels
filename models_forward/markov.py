@@ -116,7 +116,7 @@ class MarkovModel(object):
     def n_parameters(self):
         return len(self._edges) * 2
 
-    def model(self, E=50, g=1, component='ikr', current='IKr'):
+    def model(self, E=-88, g=1, component='ikr', current='IKr'):
         m = myokit.Model()
 
         # Add time variable
@@ -182,7 +182,10 @@ class MarkovModel(object):
         svars = {}
         for i, state in enumerate(self.states):
             var = cc.add_variable(state.name)
-            var.promote(0)
+            if i==0: # Add initial condition of all probability in first state.
+                var.promote(1)
+            else:
+                var.promote(0)
             svars[state.name] = var
 
         # Set equations for states
