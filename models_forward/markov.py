@@ -8,10 +8,11 @@ from __future__ import print_function
 import myokit
 
 class State(object):
-    def __init__(self, name, indice, conducting=False):
+    def __init__(self, name, conducting=False):
         self.name = str(name)
         self.conducting = bool(conducting)
         self.indice = None
+        #print('Created state "', name, ' Conducting = ',conducting,'.')
 
 
 class Rate(object):
