@@ -244,7 +244,7 @@ class MarkovModel(object):
         rhs = myokit.Name(g)
         for state in self.states:
             if state.conducting:
-                rhs = myokit.Multiply(rhs, myokit.Name(state_map[state.name]))
+                rhs = myokit.Multiply(rhs, myokit.Name(svars[state.name]))
         rhs = myokit.Multiply(
             rhs, myokit.Minus(myokit.Name(v), myokit.Name(e)))
         var.set_rhs(rhs)
