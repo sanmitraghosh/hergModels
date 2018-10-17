@@ -30,13 +30,20 @@ class ForwardModel(pints.ForwardModel):
 
     """
     
-    def __init__(self, protocol, temperature, myo_model, n_params, sine_wave=False, logTransform=False):
+    def __init__(self, protocol, temperature, myo_model, sine_wave=False, logTransform=False):
 
         # Load model
-        model = myo_model
+        model = myokit.load_model(myo_model)
+        n_params = int(model.get('ikr.n_params').value())
+        parameters = np.zeros(n_params)
+        for i in xrange(n_params):
+            parameters[i] = model.get('ikr.p'+str(i+1)).value()
+        
+        self.parameters = parameters
+        self.n_params = len(parameters)
 
         # Set reversal potential
-        model.get('ikr.E').set_rhs(erev(temperature))
+        model.get('nernst.EK').set_rhs(erev(temperature))
 
         # Add sine-wave equation to model
         if sine_wave:

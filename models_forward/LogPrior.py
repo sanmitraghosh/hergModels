@@ -8,19 +8,22 @@ from __future__ import print_function
 import os
 import pints
 import numpy as np
+import json 
+import operator
 from Rates import ratesPrior
 
 class LogPrior(pints.LogPrior):
     """
     Unnormalised prior with constraint on the rate constants.
     """
-    def __init__(self, rate_dict_maker, lower_conductance, n_params, logTransform = False):
+    def __init__(self, rate_dict, lower_conductance, n_params, logTransform = False):
         super(LogPrior, self).__init__()
         
         self.lower_conductance = lower_conductance
         self.upper_conductance = 10 * lower_conductance
         self.minf = -float(np.inf)
-        self.rate_dict_maker = rate_dict_maker
+        #sorted_rate_dict = sorted(d.items(), key=lambda x: x[1]) #sorted(rate_dict.items(), key=operator.itemgetter(0))
+        self.rate_dict = rate_dict#sorted_rate_dict
         self.n_params = n_params
         if logTransform:
             self.logParam = True
@@ -30,8 +33,19 @@ class LogPrior(pints.LogPrior):
         return self.n_params
 
     def _get_rates(self, parameters):
-        return self.rate_dict_maker(parameters)
+        i = 0
+        for _, rate in self.rate_dict.iteritems():
+            if rate[1] == 'vol_ind':
+                rate[0] = parameters[i]
+                i += 1
 
+            elif rate[2] == 'positive' or rate[2] == 'negative':
+                rate[0] = parameters[i]
+                rate[1] = parameters[i+1]
+                i += 2
+        
+        return self.rate_dict
+        
     def __call__(self, parameters):
         if self.logParam:
             parameters = np.exp(parameters)
@@ -42,7 +56,8 @@ class LogPrior(pints.LogPrior):
             return self.minf
 
         rate_dict = self._get_rates(parameters)
-
+         
+        
         rate_checker = ratesPrior(self.lower_conductance)
         return rate_checker.check_rates(rate_dict)
 
@@ -50,7 +65,7 @@ class LogPrior(pints.LogPrior):
 
         rate_checker = ratesPrior(self.lower_conductance)
         # dummy parameters passed to highlight rate directions (Fw/Bw)
-        rate_dict = self._get_rates(np.zeros(self.n_params))
+        rate_dict = self._get_rates(np.zeros(self.n_params-1))
         
         params = rate_checker._sample_partial(rate_dict)
 
