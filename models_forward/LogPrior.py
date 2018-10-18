@@ -35,7 +35,7 @@ class LogPrior(pints.LogPrior):
     def _get_rates(self, parameters):
         i = 0
         for _, rate in self.rate_dict.iteritems():
-            if rate[1] == 'vol_ind':
+            if rate[2] == 'vol_ind':
                 rate[0] = parameters[i]
                 i += 1
 
@@ -49,10 +49,13 @@ class LogPrior(pints.LogPrior):
     def __call__(self, parameters):
         if self.logParam:
             parameters = np.exp(parameters)
+            #parameters.setflags(write=1)
+            #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
+            #parameters = np.array(parameters)
 
         if parameters[-1] < self.lower_conductance:
             return self.minf
-        if parameters[-1] < self.upper_conductance:
+        if parameters[-1] > self.upper_conductance:
             return self.minf
 
         rate_dict = self._get_rates(parameters)

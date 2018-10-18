@@ -41,6 +41,7 @@ class ForwardModel(pints.ForwardModel):
         
         self.parameters = parameters
         self.n_params = len(parameters)
+        self.func_call = 0
 
         # Set reversal potential
         model.get('nernst.EK').set_rhs(erev(temperature))
@@ -90,17 +91,22 @@ class ForwardModel(pints.ForwardModel):
 
     def simulate(self, parameters, times):
         # Note: Kylie doesn't do pre-pacing!
+        self.func_call +=1
+        
         if self.logParam:
             parameters = np.exp(parameters)
-            
+            #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
+            #parameters = np.array(parameters)
         # Update model parameters
         for i in xrange(int(self.n_params)):
 
             self.simulation.set_constant('ikr.p'+str(i+1), parameters[i])
         
+        
          # Run
         self.simulation.reset()
         try:
+            
             d = self.simulation.run(
                 np.max(times + 0.5 * times[1]),
                 log_times = times,
@@ -113,6 +119,13 @@ class ForwardModel(pints.ForwardModel):
         self.simulated_v = d['membrane.V']
 
         # Return
+        """
+        counter = self.simulation.last_number_of_evaluations()
+        outfile = 'func_calls.txt'
+        func_calls = d['ikr.counter']
+        np.savetxt(outfile, func_calls)
+
+        """
         return d['ikr.IKr']
 
 class Pr1Error(pints.ErrorMeasure):

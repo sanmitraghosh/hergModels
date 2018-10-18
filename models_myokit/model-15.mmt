@@ -1,0 +1,67 @@
+[[model]]
+name: linearCCCOI
+author: Sanmitra Ghosh
+desc: Kylie's model as imported from the Mex file
+# Initial values
+ikr.y1 = 1#0.9999999850338328#1
+ikr.y2 = 0#3.895922915798986e-09
+ikr.y3 = 0#7.457975740580235e-09
+ikr.y4 = 0#2.26204601685622e-09
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+# Model from Kylie's mex file (HH)
+#
+[ikr]
+use membrane.V
+IKr = p17 * y4 * (V - nernst.EK)
+y5 = 1 - (y1 + y2 + y3 + y4)
+k12 = p1 * exp( p2 * V)
+k21 = p3 * exp(-p4 * V)
+k34 = p13 
+k43 = p14
+k56 = p5 * exp( p6 * V)
+k65 = p7 * exp(-p8 * V)
+k78 = p9 * exp(p10 * V)
+k87 = p11 * exp(-p12 * V)
+
+dot(y1) = -k12 * y1 + k21 * y2
+dot(y2) = -(k21 + k34) * y2 + k12 * y1 + k43 * y3
+dot(y3) = -(k43 + k56) * y3 + k34 * y2 + k65 * y4
+dot(y4) = -(k65 + k78) * y4 + k56 * y3 + k87 * y5
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 0.08730 [1/ms]
+p10 = 8.91e-3 [1/mV]
+p11 = 5.15e-3 [1/ms]
+p12 = 0.03158 [1/mV]
+p13 = 0.08730 [1/ms]
+p14 = 8.91e-3 [1/mV]
+p15 = 0.15240 [mS/uF]
+
+
+

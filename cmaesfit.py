@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description='Fit all the hERG models to sine wave data')
 parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
-parser.add_argument('--model', type=int, default=0, metavar='N', \
+parser.add_argument('--model', type=int, default=16, metavar='N', \
       help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
 parser.add_argument('--plot', type=bool, default=True, metavar='N', \
       help='plot fitted traces' )
@@ -126,6 +126,8 @@ log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 # Run repeated optimisations
 repeats = 1
 params, scores = [], []
+
+func_calls = []
 for i in xrange(repeats):
 	# Choose random starting point
 	x0 = log_prior.sample()
@@ -133,10 +135,11 @@ for i in xrange(repeats):
 	# Create optimiser and log transform parameters
 	x0=np.log(x0)
 	
-	#x0[0],x0[2],x0[4],x0[6] =np.log([x0[0],x0[2],x0[4],x0[6]])
-	
-	opt = pints.Optimisation(log_posterior, x0, method=pints.CMAES)
-	opt.set_max_iterations(None)
+	#x0[1],x0[3],x0[5],x0[7],x0[9],x0[11] =np.log([x0[1],x0[3],x0[5],x0[7],x0[9],x0[11]])
+	#x0 = np.array(x0)
+	print(x0)
+	opt = pints.Optimisation(log_likelihood, x0, method=pints.XNES)
+	opt.set_max_iterations(10)
 	opt.set_parallel(True)
 
 	# Run optimisation
@@ -144,9 +147,17 @@ for i in xrange(repeats):
 	    with np.errstate(all='ignore'): # Tell numpy not to issue warnings
 		p, s = opt.run()
 		p = np.exp(p)
+		#tm = np.zeros(n_params)
+		#tm = p
+		#p.setflags(write=1)
+		#p[1],p[3],p[5],p[7],p[9],p[11] =np.exp([p[1],p[3],p[5],p[7],p[9],p[11]])
+		
+
+		func_calls.append(model.func_call)
+		print(func_calls)
 		params.append(p)
 		scores.append(s)
-		print(p)
+		
 
 	except ValueError:
 	    import traceback

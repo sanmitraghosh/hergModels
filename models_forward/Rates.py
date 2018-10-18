@@ -34,7 +34,7 @@ class ratesPrior(object):
 
     def check_rates(self, rates_dict):
 
-        debug = False
+        debug = True
         # Check parameter boundaries
         for names, rate in rates_dict.iteritems():
 
@@ -46,7 +46,7 @@ class ratesPrior(object):
                     if debug: print('Lower')
                     return self.minf
 
-            if rate[1] == 'vol_ind':
+            if rate[2] == 'vol_ind':
                 
                 r = rate[0] 
                 if r < self.rmin or r > self.rmax:
@@ -80,8 +80,8 @@ class ratesPrior(object):
                     if debug: print(names)
                     return self.minf
 
-            else:
-                return self.minf   
+            #else:
+            #    return self.minf   
                 
         return 0
 
@@ -108,7 +108,7 @@ class ratesPrior(object):
         for _, rate in rates_dict.iteritems():
             # Sample forward rates
 
-            if rate[1] == 'vol_ind':
+            if rate[2] == 'vol_ind':
                 p.append(self._sample_rates(self.vmax, True))
             
             elif rate[2] == 'positive':
