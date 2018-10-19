@@ -1,5 +1,5 @@
 [[model]]
-name: model-3
+name: model-9
 author: Sanmitra Ghosh
 desc: Check associated model deifintion document
 # Initial values
@@ -29,7 +29,7 @@ EK = -85 [mV]
 #
 [ikr]
 use membrane.V
-IKr = p9 * m * h * (V - nernst.EK)
+IKr = p9 * (m**2) * h * (V - nernst.EK)
 
 bm = p1 * exp(p2*V)
 am = p3 * exp(-p4*V)
