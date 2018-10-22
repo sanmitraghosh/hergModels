@@ -239,7 +239,7 @@ def transformer(transform, parameters, rate_dict, logexp = True):
                     
                         
 
-    return ((R*T)/F) * np.log(k_o/K_i)
+    
     	
 
 
