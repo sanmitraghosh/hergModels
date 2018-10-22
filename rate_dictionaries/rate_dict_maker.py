@@ -2,7 +2,18 @@ from __future__ import division
 from __future__ import print_function
 import cPickle
 import os
+# Gary says:
+# This file creates some 'rate dictionaries' that simply state whether parameters
+# are involved in 'positive' rates (increase with increasing Voltage); or 
+# 'negative' rates (increase with decreasing voltage). 
+#
+# i.e. rate=A*exp(BV) is called 'positive'; rate=A*exp(-BV) is called 'negative'.
+# A special case is 'vol_ind' which signifies a voltage independent rate 
+# (rate=A with B hardcoded to zero).
+#
 
+
+#################################################################################
 model_name = 'model-0'
 rate0 = {
 1: [int(0), int(1), 'positive'],
