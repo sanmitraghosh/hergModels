@@ -1,7 +1,7 @@
 [[model]]
 name: model-12
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.C2 = 1
 ikr.C1 = 0
@@ -21,14 +21,20 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
 EK = -85 [mV]
 
-#
-# Model from Kylie's mex file (HH)
+# MODEL
+#          2am       am
+#     IC2 <==> IC1  <==>  I
+#     ||   bm   ||   2bm || 
+#  b3*||a3   b2*||a2   b1||a1
+#     ||   2am  ||   am  || 
+#     C2  <==>  C1  <==>  O
+#          bm        2bm
 #
 [ikr]
 use membrane.V

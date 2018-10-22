@@ -1,7 +1,7 @@
 [[model]]
 name: model-9
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.m = 0#7.421666396065612e-06
 ikr.h = 0#5.202995292628385e-06
@@ -18,7 +18,7 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
@@ -31,10 +31,10 @@ EK = -85 [mV]
 use membrane.V
 IKr = p9 * (m*m) * h * (V - nernst.EK)
 
-bm = p1 * exp(p2*V)
-am = p3 * exp(-p4*V)
-ah = p5 * exp(p6*V)
-bh = p7 * exp(-p8*V)
+am = p1 * exp(p2*V)
+bm = p3 * exp(-p4*V)
+bh = p5 * exp(p6*V)
+ah = p7 * exp(-p8*V)
 
 m_inf = am/(am + bm)
 taum = 1/(am + bm)
