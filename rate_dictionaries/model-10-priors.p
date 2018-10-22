@@ -31,15 +31,4 @@ asI6
 I10
 aI11
 ag5
-asI7
-(lp10
-I12
-aF0
-aS'vol_ind'
-p11
-asI8
-(lp12
-I13
-aF0
-ag11
 as.
