@@ -50,6 +50,32 @@ root = os.path.abspath('rate_dictionaries')
 rate_filename = os.path.join(root, model_name + '-priors.p')
 cPickle.dump(rate3, open(rate_filename, 'wb')) 
 #################################################################################
+model_name = 'model-4'
+rate4 = {
+1: [int(0), int(1), 'positive'],
+2: [int(2), int(3), 'negative'],
+3: [int(4), int(5), 'positive'],
+4: [int(6), int(7), 'negative'],
+5: [int(8), int(9), 'negative']
+}
+
+root = os.path.abspath('rate_dictionaries')
+rate_filename = os.path.join(root, model_name + '-priors.p')
+cPickle.dump(rate4, open(rate_filename, 'wb')) 
+#################################################################################
+model_name = 'model-5'
+rate5 = {
+1: [int(0), int(1), 'positive'],
+2: [int(2), int(3), 'negative'],
+3: [int(4), int(5), 'positive'],
+4: [int(6), int(7), 'negative'],
+5: [int(8), int(9), 'positive']
+}
+
+root = os.path.abspath('rate_dictionaries')
+rate_filename = os.path.join(root, model_name + '-priors.p')
+cPickle.dump(rate5, open(rate_filename, 'wb')) 
+#################################################################################
 model_name = 'model-10'
 rate10 = {
 1: [int(0), int(1), 'positive'],
