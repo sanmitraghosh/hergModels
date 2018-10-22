@@ -138,7 +138,7 @@ for i in xrange(repeats):
 	#x0[1],x0[3],x0[5],x0[7],x0[9],x0[11] =np.log([x0[1],x0[3],x0[5],x0[7],x0[9],x0[11]])
 	#x0 = np.array(x0)
 	print(x0)
-	opt = pints.Optimisation(log_likelihood, x0, method=pints.XNES)
+	opt = pints.Optimisation(log_posterior, x0, method=pints.XNES)
 	opt.set_max_iterations(10)
 	opt.set_parallel(True)
 
