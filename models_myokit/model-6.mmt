@@ -42,13 +42,9 @@ a3 = p11* exp(-p12*V)
 a4 = p13* exp(p14*V)
 b4 = (b3*b2*a1*a4)/(b1*a2*a3)
 
-
 dot(C) = a1*O + b4*IC - C*(b1+a4)
 dot(O) = b1*C + b2*I - O*(a2+a1)
 dot(I) = a2*O + b3*IC -I*(b2 + a3)
-
-
-
 
 p1 = 2.26e-4 [1/ms]
 p2 = 0.06990 [1/mV]
