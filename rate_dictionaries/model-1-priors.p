@@ -11,14 +11,4 @@ I2
 aI3
 aS'negative'
 p5
-asI3
-(lp6
-I4
-aI5
-ag3
-asI4
-(lp7
-I6
-aI7
-ag5
 as.

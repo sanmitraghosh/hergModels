@@ -29,10 +29,10 @@ EK = -85 [mV]
 use membrane.V
 IKr = p9 * m * h * (V - nernst.EK)
 
-bm = p1 * exp(-p2*V)
-am = p3 * exp(p4*V)
-ah = p5 * exp(-p6*V)
-bh = p7 * exp(p8*V)
+am = p1 * exp(p2*V)
+bm = p3 * exp(-p4*V)
+bh = p5 * exp(p6*V)
+ah = p7 * exp(-p8*V)
 
 m_inf = am/(am + bm)
 taum = 1/(am + bm)

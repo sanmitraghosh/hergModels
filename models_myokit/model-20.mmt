@@ -43,7 +43,7 @@ a2 = p13 * exp(p14*V)
 b2 = p15 * exp(-p16*V)
 
 
-h_inf = ah*(ah + bh)
+h_inf = ah/(ah + bh)
 tauh = 1/(ah + bh)
 
 dot(C2) = b2*C1 + a1*C3 - C2*(a2 +b1)

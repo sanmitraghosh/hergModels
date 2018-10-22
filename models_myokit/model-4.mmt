@@ -1,7 +1,7 @@
 [[model]]
 name: model-4
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.C = 1
 ikr.O = 0
@@ -19,7 +19,7 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
@@ -44,9 +44,6 @@ b3 = (a3*b2)/a1
 dot(C) = a1*O + b4*IC - C*(b2+a4)
 dot(O) = b2*C + b4*I - O*(a4+a1)
 dot(I) = a4*O + b3*IC -I*(b4 + a3)
-
-
-
 
 p1 = 2.26e-4 [1/ms]
 p2 = 0.06990 [1/mV]
