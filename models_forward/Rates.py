@@ -32,50 +32,50 @@ class ratesPrior(object):
         self.vmin = -120
         self.vmax =  60
 
-    def check_rates(self, rates_dict):
+    def check_rates(self, rates_dict, parameters):
 
         debug = True
         # Check parameter boundaries
         for names, rate in rates_dict.iteritems():
 
-            if rate[0] < self.lower_alpha:
+            if parameters[rate[0]] < self.lower_alpha:
                     if debug: print('Lower')
                     return self.minf
 
-            if rate[0] > self.upper_alpha:
+            if parameters[rate[0]] > self.upper_alpha:
                     if debug: print('Lower')
                     return self.minf
 
             if rate[2] == 'vol_ind':
                 
-                r = rate[0] 
+                r = parameters[rate[0]] 
                 if r < self.rmin or r > self.rmax:
                     if debug: print(names)
                     return self.minf   
 
             elif rate[2] == 'positive':
-                if rate[1] < self.lower_beta:
+                if parameters[rate[1]] < self.lower_beta:
                         if debug: print('Lower')
                         return self.minf
 
-                if rate[1] > self.upper_beta:
+                if parameters[rate[1]] > self.upper_beta:
                         if debug: print('Lower')
                         return self.minf     
 
-                r = rate[0] * np.exp(rate[1] * self.vmax)
+                r = parameters[rate[0]] * np.exp(parameters[rate[1]] * self.vmax)
                 if r < self.rmin or r > self.rmax:
                     if debug: print(names)
                     return self.minf
 
             elif rate[2] == 'negative':
-                if rate[1] < self.lower_beta:
+                if parameters[rate[1]] < self.lower_beta:
                         if debug: print('Lower')
                         return self.minf
 
-                if rate[1] > self.upper_beta:
+                if parameters[rate[1]] > self.upper_beta:
                         if debug: print('Lower')
                         return self.minf     
-                r = rate[0] * np.exp(-rate[1] * self.vmin)
+                r = parameters[rate[0]] * np.exp(-parameters[rate[1]] * self.vmin)
                 if r < self.rmin or r > self.rmax:
                     if debug: print(names)
                     return self.minf

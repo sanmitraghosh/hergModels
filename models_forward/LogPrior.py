@@ -23,7 +23,8 @@ class LogPrior(pints.LogPrior):
         self.upper_conductance = 10 * lower_conductance
         self.minf = -float(np.inf)
         #sorted_rate_dict = sorted(d.items(), key=lambda x: x[1]) #sorted(rate_dict.items(), key=operator.itemgetter(0))
-        self.rate_dict = rate_dict#sorted_rate_dict
+        #sorted_rate_dict
+        self.rate_dict = rate_dict
         self.n_params = n_params
         if logTransform:
             self.logParam = True
@@ -32,6 +33,7 @@ class LogPrior(pints.LogPrior):
     def n_parameters(self):
         return self.n_params
 
+    """
     def _get_rates(self, parameters):
         i = 0
         for _, rate in self.rate_dict.iteritems():
@@ -45,7 +47,7 @@ class LogPrior(pints.LogPrior):
                 i += 2
         
         return self.rate_dict
-        
+    """    
     def __call__(self, parameters):
         if self.logParam:
             parameters = np.exp(parameters)
@@ -58,19 +60,19 @@ class LogPrior(pints.LogPrior):
         if parameters[-1] > self.upper_conductance:
             return self.minf
 
-        rate_dict = self._get_rates(parameters)
+        #rate_dict = self._get_rates(parameters)
          
         
         rate_checker = ratesPrior(self.lower_conductance)
-        return rate_checker.check_rates(rate_dict)
+        return rate_checker.check_rates(self.rate_dict, parameters)
 
     def sample(self):
 
         rate_checker = ratesPrior(self.lower_conductance)
         # dummy parameters passed to highlight rate directions (Fw/Bw)
-        rate_dict = self._get_rates(np.zeros(self.n_params-1))
+        #rate_dict = self._get_rates(np.zeros(self.n_params-1))
         
-        params = rate_checker._sample_partial(rate_dict)
+        params = rate_checker._sample_partial(self.rate_dict)
 
         return params
               
