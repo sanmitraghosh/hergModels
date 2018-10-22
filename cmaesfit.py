@@ -11,7 +11,8 @@ import myokit
 import argparse
 import cPickle
 import matplotlib.pyplot as plt
-
+sys.path.append(os.path.abspath('models_forward'))
+import util
 # Load beattie model and prior
 
 
@@ -27,6 +28,8 @@ parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
 parser.add_argument('--model', type=int, default=16, metavar='N', \
       help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
+parser.add_argument('--transform', type=int, default=2, metavar='N', \
+      help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog' ), \
 parser.add_argument('--plot', type=bool, default=True, metavar='N', \
       help='plot fitted traces' )
 args = parser.parse_args()
@@ -105,7 +108,8 @@ time, voltage, current = forwardModel.capacitance(
 #
 # Create forward model
 #
-model = forwardModel.ForwardModel(protocol, temperature, myo_model, sine_wave=True, logTransform=True)
+transform = args.transform
+model = forwardModel.ForwardModel(protocol, temperature, myo_model, rate_dict,  transform, sine_wave=True, logTransform=True)
 n_params = model.n_params
 #
 # Define problem
@@ -119,7 +123,7 @@ problem = pints.SingleOutputProblem(model, time, current)
 
 
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = prior.LogPrior(rate_dict, lower_conductance, n_params, logTransform=True)
+log_prior = prior.LogPrior(rate_dict, lower_conductance, n_params,  transform, logTransform=True )
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 
 
@@ -133,15 +137,20 @@ for i in xrange(repeats):
 	x0 = log_prior.sample()
 	print(x0)
 	# Create optimiser and log transform parameters
-	x0=np.log(x0)
+	if transform == 1:
+		x0 = util.transformer('loglinear', x0, rate_dict, True)
+	elif transform == 2:
+		x0 = util.transformer('loglog', x0, rate_dict, True)
+
 	
 	#x0[1],x0[3],x0[5],x0[7],x0[9],x0[11] =np.log([x0[1],x0[3],x0[5],x0[7],x0[9],x0[11]])
 	#x0 = np.array(x0)
 	print(x0)
-	opt = pints.Optimisation(log_posterior, x0, method=pints.XNES)
-	opt.set_max_iterations(10)
+	opt = pints.Optimisation(log_posterior, x0, method=pints.CMAES)
+	opt.set_max_iterations(None)
 	opt.set_parallel(True)
-
+	filename = './trial/'+model_name+str(i+1)
+	opt.set_log_to_file(filename, csv=True)
 	# Run optimisation
 	try:
 	    with np.errstate(all='ignore'): # Tell numpy not to issue warnings
@@ -207,7 +216,7 @@ print(plot)
 if plot:
 	root = os.path.abspath('figures/cmaesfit')
 	fig_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-cmaes_test.eps')
-	model = forwardModel.ForwardModel(protocol, temperature, myo_model, sine_wave=True, logTransform=False)
+	model = forwardModel.ForwardModel(protocol, temperature, myo_model, rate_dict, transform, sine_wave=True, logTransform=False)
 	
 	plt.figure()
 	plt.subplot(2,1,1)

@@ -10,13 +10,14 @@ import pints
 import numpy as np
 import json 
 import operator
+import util
 from Rates import ratesPrior
 
 class LogPrior(pints.LogPrior):
     """
     Unnormalised prior with constraint on the rate constants.
     """
-    def __init__(self, rate_dict, lower_conductance, n_params, logTransform = False):
+    def __init__(self, rate_dict, lower_conductance, n_params,  transform_type, logTransform = False):
         super(LogPrior, self).__init__()
         
         self.lower_conductance = lower_conductance
@@ -28,8 +29,10 @@ class LogPrior(pints.LogPrior):
         self.n_params = n_params
         if logTransform:
             self.logParam = True
+            self.transform_type = transform_type
         else:
             self.logParam = False
+        
     def n_parameters(self):
         return self.n_params
 
@@ -50,7 +53,10 @@ class LogPrior(pints.LogPrior):
     """    
     def __call__(self, parameters):
         if self.logParam:
-            parameters = np.exp(parameters)
+            if self.transform_type == 1:
+                parameters = util.transformer('loglinear', parameters, self.rate_dict, False)
+            elif self.transform_type == 2:
+                parameters = util.transformer('loglog', parameters, self.rate_dict, False)
             #parameters.setflags(write=1)
             #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
             #parameters = np.array(parameters)

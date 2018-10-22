@@ -31,10 +31,21 @@ class ratesPrior(object):
 
         self.vmin = -120
         self.vmax =  60
+        n = 1e3
+        a = np.linspace(self.lower_alpha, self.upper_alpha, n)
+        self.f_bmin = (1 / self.vmax) * (np.log(self.rmin) - np.log(a))
+        f_bmax = (1 / self.vmax) * (np.log(self.rmax) - np.log(a))
+        self.f_bmax = np.minimum(f_bmax, self.upper_beta)
+        #self.f_bmax[0] =  self.upper_beta
 
+        r_bmin = (-1 / self.vmin) * (np.log(self.rmin) - np.log(a))
+        r_bmax = (-1 / self.vmin) * (np.log(self.rmax) - np.log(a))
+        self.r_bmin = np.maximum(r_bmin, self.lower_beta)
+        self.r_bmax = np.minimum(r_bmax, self.upper_beta) 
+        #self.r_bmax[0] =  self.upper_beta
     def check_rates(self, rates_dict, parameters):
 
-        debug = True
+        debug = False
         # Check parameter boundaries
         for names, rate in rates_dict.iteritems():
 
@@ -58,7 +69,7 @@ class ratesPrior(object):
                         if debug: print('Lower')
                         return self.minf
 
-                if parameters[rate[1]] > self.upper_beta:
+                if parameters[rate[1]] > self.f_bmax[0]:
                         if debug: print('Lower')
                         return self.minf     
 
@@ -72,7 +83,7 @@ class ratesPrior(object):
                         if debug: print('Lower')
                         return self.minf
 
-                if parameters[rate[1]] > self.upper_beta:
+                if parameters[rate[1]] > self.r_bmax[0]:
                         if debug: print('Lower')
                         return self.minf     
                 r = parameters[rate[0]] * np.exp(-parameters[rate[1]] * self.vmin)
@@ -80,21 +91,23 @@ class ratesPrior(object):
                     if debug: print(names)
                     return self.minf
 
-            #else:
-            #    return self.minf   
-                
+
         return 0
 
-    def _sample_rates(self, v, ind = False):
+    def _sample_rates(self, v, rate_type):
         for i in xrange(100):
             a = np.exp(np.random.uniform(
                 np.log(self.lower_alpha), np.log(self.upper_alpha)))
-            b = np.random.uniform(self.lower_beta, self.upper_beta)
-            if not ind:
+            
+            if rate_type == 'positive' or rate_type == 'negative':
+                if rate_type == 'positive':
+                    b = np.random.uniform(self.lower_beta, self.f_bmax[0])
+                if rate_type == 'negative':
+                    b = np.random.uniform(self.lower_beta, self.r_bmax[0])
                 r = a * np.exp(b * v)
                 if r >= self.rmin and r <= self.rmax:
                     return a, b
-            else:
+            elif rate_type == 'vol_ind':
                 r = a
                 if r >= self.rmin and r <= self.rmax:
                     return a
@@ -109,16 +122,16 @@ class ratesPrior(object):
             # Sample forward rates
 
             if rate[2] == 'vol_ind':
-                p.append(self._sample_rates(self.vmax, True))
+                p.append(self._sample_rates(self.vmax, rate[2]))
             
             elif rate[2] == 'positive':
-                p.append(self._sample_rates(self.vmax)[0])
-                p.append(self._sample_rates(self.vmax)[1])
+                p.append(self._sample_rates(self.vmax, rate[2])[0])
+                p.append(self._sample_rates(self.vmax, rate[2])[1])
                 
             # Sample backward rates
             elif rate[2] == 'negative':
-                p.append(self._sample_rates(-self.vmin)[0])
-                p.append(self._sample_rates(-self.vmin)[1])
+                p.append(self._sample_rates(-self.vmin, rate[2])[0])
+                p.append(self._sample_rates(-self.vmin, rate[2])[1])
                 
         # Sample conductance
         p.append( np.random.uniform(

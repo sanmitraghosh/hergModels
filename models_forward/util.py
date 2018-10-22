@@ -202,7 +202,44 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
     except KeyError:
         pass
 
+def transformer(transform, parameters, rate_dict, logexp = True):
+    txd_params = np.copy(parameters)
+    if transform == 'loglog':
 
+        for names, rate in rate_dict.iteritems():
+            if rate[2] == 'positive' or rate[2] == 'negative':
+                if logexp:
+                    txd_params[rate[0]] = np.log(txd_params[rate[0]])
+                    txd_params[rate[1]] = np.log(txd_params[rate[1]])
+                else:
+                    txd_params[rate[0]] = np.exp(txd_params[rate[0]])
+                    txd_params[rate[1]] = np.exp(txd_params[rate[1]])
+            if rate[2] == 'vol_ind':
+                if logexp:
+                    txd_params[rate[0]] = np.log(txd_params[rate[0]])
+                    
+                else:
+                    txd_params[rate[0]] = np.exp(txd_params[rate[0]])
+        if logexp:
+            txd_params[-1] = np.log(txd_params[-1])
+        else:
+            txd_params[-1] = np.exp(txd_params[-1])
+    if transform == 'loglinear':
+
+        for names, rate in rate_dict.iteritems():
+
+            if logexp:
+                txd_params[rate[0]] = np.log(txd_params[rate[0]])
+            else:
+                txd_params[rate[0]] = np.exp(txd_params[rate[0]])
+        
+    
+    return txd_params
+            
+                    
+                        
+
+    return ((R*T)/F) * np.log(k_o/K_i)
     	
 
 

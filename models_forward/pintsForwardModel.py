@@ -30,7 +30,7 @@ class ForwardModel(pints.ForwardModel):
 
     """
     
-    def __init__(self, protocol, temperature, myo_model, sine_wave=False, logTransform=False):
+    def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=False, logTransform=False):
 
         # Load model
         model = myokit.load_model(myo_model)
@@ -42,7 +42,8 @@ class ForwardModel(pints.ForwardModel):
         self.parameters = parameters
         self.n_params = len(parameters)
         self.func_call = 0
-
+        self.rate_dict = rate_dict
+        
         # Set reversal potential
         model.get('nernst.EK').set_rhs(erev(temperature))
 
@@ -75,6 +76,7 @@ class ForwardModel(pints.ForwardModel):
         # Don't log transform params unless specified
         if logTransform:
             self.logParam = True
+            self.transform_type = transform_type
         else:
             self.logParam = False
 
@@ -94,7 +96,11 @@ class ForwardModel(pints.ForwardModel):
         self.func_call +=1
         
         if self.logParam:
-            parameters = np.exp(parameters)
+            if self.transform_type == 1:
+                parameters = util.transformer('loglinear', parameters, self.rate_dict, False)
+            elif self.transform_type == 2:
+                parameters = util.transformer('loglog', parameters, self.rate_dict, False)
+                    
             #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
             #parameters = np.array(parameters)
         # Update model parameters
@@ -110,13 +116,17 @@ class ForwardModel(pints.ForwardModel):
             d = self.simulation.run(
                 np.max(times + 0.5 * times[1]),
                 log_times = times,
-                log = ['engine.time', 'ikr.IKr', 'membrane.V'],
+                log = ['engine.time', 'ikr.IKr', 'membrane.V']
+                #log = ['engine.time', 'ikr.IKr', 'membrane.V', 'ikr.m_inf', 'ikr.h_inf'],
                 ).npview()
         except myokit.SimulationError:
             return times * float('inf')
 
         # Store membrane potential for debugging
         self.simulated_v = d['membrane.V']
+        #self.simulated_minf = d['ikr.m_inf']
+        #self.simulated_hinf = d['ikr.h_inf']
+
 
         # Return
         """
