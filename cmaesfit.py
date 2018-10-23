@@ -28,7 +28,7 @@ parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
 parser.add_argument('--model', type=int, default=16, metavar='N', \
       help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
-parser.add_argument('--transform', type=int, default=2, metavar='N', \
+parser.add_argument('--transform', type=int, default=1, metavar='N', \
       help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog' ), \
 parser.add_argument('--plot', type=bool, default=True, metavar='N', \
       help='plot fitted traces' )
@@ -128,7 +128,7 @@ log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 
 
 # Run repeated optimisations
-repeats = 1
+repeats = 5
 params, scores = [], []
 
 func_calls = []
@@ -155,7 +155,11 @@ for i in xrange(repeats):
 	try:
 	    with np.errstate(all='ignore'): # Tell numpy not to issue warnings
 		p, s = opt.run()
-		p = np.exp(p)
+		if transform == 1:
+			p = util.transformer('loglinear', p, rate_dict, False)
+		elif transform == 2:
+			p = util.transformer('loglog', p, rate_dict, False)		
+		
 		#tm = np.zeros(n_params)
 		#tm = p
 		#p.setflags(write=1)
@@ -211,6 +215,7 @@ print ('CMAES fitting is done for model', args.model)
 #
 # re-create forward model
 #
+
 plot = args.plot
 print(plot)
 if plot:
