@@ -1,7 +1,7 @@
 [[model]]
 name: model-21
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.C3 = 1
 ikr.C2 = 0
@@ -23,20 +23,19 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
 EK = -85 [mV]
 
 #
-# Model from Kylie's mex file (HH)
 #
 [ikr]
 use membrane.V
 IKr = p23 * O * (V - nernst.EK)
 
-IC2 = 1 - (C1 + C2 C3 + O + I + IC1 + IC2)
+IC3 = 1 - (C1 + C2 + C3 + O + I + IC1 + IC2)
 
 ah = p1 * exp( p2 * V)
 bh = p3 * exp(-p4 * V)
@@ -51,7 +50,7 @@ b4 = (a4*b1)/a1
 a5 = p19 * exp(p20 * V)
 b5 = (a5*b2)/a2
 a6 = p21 * exp(p22 * V)
-b5 = (a6*b3)/a3
+b6 = (a6*b3)/a3
 
 dot(C3) = b1*C2 + bh*IC3 - C3*(a1 + ah)
 dot(C2) = b2*C1 + a1*C3 +bh*IC2 - C2*(a2 + b1 + ah)
