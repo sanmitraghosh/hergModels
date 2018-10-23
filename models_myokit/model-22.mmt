@@ -1,7 +1,7 @@
 [[model]]
 name: model-22
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.C3 = 1
 ikr.C2 = 0
@@ -23,7 +23,7 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
@@ -36,7 +36,7 @@ EK = -85 [mV]
 use membrane.V
 IKr = p15 * O * (V - nernst.EK)
 
-IC2 = 1 - (C1 + C2 C3 + O + I + IC1 + IC2)
+IC3 = 1 - (C1 + C2 + C3 + O + I + IC1 + IC2)
 
 am = p1 * exp( p2 * V)
 bm = p3 * exp(-p4 * V)
@@ -47,15 +47,14 @@ b2 = (a2*b1)/a1
 a3 = p11 * exp( p12* V)
 b3 = (a3*b2)/a2
 a4 = p13 * exp( p14 * V)
-b3 = (a4*b3)/a3
-
+b4 = (a4*b3)/a3
 
 dot(C3) = bm*C2 + b4*IC3 - C3*(a4 + 3*am)
 dot(C2) = 2*bm*C1 + 3*am*C3 + b3*IC2 - C2*(a3 + 2*am + bm)
 dot(C1) = 3*bm*O + 2*am*C2 + b2*IC1 - C1*(am + 2*bm + a2)
 dot(O) = b1*I + am*C1 - O*(3*bm + a1)
 dot(I) = a1*O + am*IC1 - I*(b1 + 3*bm)
-dot(IC1) = 3*bm*I + 2*am*IC2 + a2*C1 - IC1*(a6 + bh + b5)
+dot(IC1) = 3*bm*I + 2*am*IC2 + a2*C1 - IC1*(2*bm + am + b2)
 dot(IC2) = 2*bm*IC1 + 3*am*IC3 + a3*C2 - IC2*(2*am + b3 + bm)
 
 p1 = 2.26e-4 [1/ms]
