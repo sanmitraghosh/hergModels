@@ -1,7 +1,7 @@
 [[model]]
 name: model-18
 author: Sanmitra Ghosh
-desc: Check associated model deifintion document
+desc: Check associated model definition document
 # Initial values
 ikr.C3 = 1
 ikr.C2 = 0
@@ -20,14 +20,13 @@ pace = 0 bind pace
 #
 [membrane]
 V = engine.pace
-    desc: membane potential
+    desc: membrane potential
     in [mV]
 
 [nernst]
 EK = -85 [mV]
 
 #
-# Model from Kylie's mex file (HH)
 #
 [ikr]
 use membrane.V
@@ -43,14 +42,12 @@ b3 = p11 * exp(-p12 * V)
 a4 = p13 * exp(p14 * V)
 b4 = p15 * exp(-p16 * V)
 a5 = p17 * exp(p18 * V)
-b4 = (a5*b3*b4)/(a3*a4)
+b5 = (a5*b3*b4)/(a3*a4)
 
-
-
-dot(C3) = b1 * C2 - a1 * C3
-dot(C2) = b2 * C1 + a1 * C3 - C2*(a2 + b1)
-dot(C1) = b3  * O + a2 * C2 + b5*I -C1*(a3 + b2 + a5)
-dot(O) = b4 * I + a3 * C1 - O*(b3 + a4)
+dot(C3) = +b1*C2 - a1*C3
+dot(C2) = +b2*C1 + a1*C3 - C2*(a2 + b1)
+dot(C1) = +b3*O  + a2*C2 + b5*I - C1*(a3 + b2 + a5)
+dot(O)  = +b4*I  + a3*C1 - O*(b3 + a4)
 
 p1 = 2.26e-4 [1/ms]
 p2 = 0.06990 [1/mV]
