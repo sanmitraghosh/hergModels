@@ -43,6 +43,55 @@ class ratesPrior(object):
         self.r_bmin = np.maximum(r_bmin, self.lower_beta)
         self.r_bmax = np.minimum(r_bmax, self.upper_beta) 
         #self.r_bmax[0] =  self.upper_beta
+
+    def _get_boundaries(self, transform, rates_dict):
+        b_low = []#np.zeros(2*len(rates_dict)+1)
+        b_up = []
+        for _, rate in rates_dict.iteritems():
+            # Sample forward rates
+            if transform == 'loglinear':
+
+                if rate[2] == 'vol_ind':
+                    b_low.append(np.log(self.lower_alpha))
+                    b_up.append(np.log(self.upper_alpha))
+                elif rate[2] == 'positive': 
+                    b_low.append(np.log(self.lower_alpha))
+                    b_low.append(self.lower_beta)
+                    b_up.append(np.log(self.upper_alpha))
+                    b_up.append(self.f_bmax[0])
+                elif rate[2] == 'negative':
+                    b_low.append(np.log(self.lower_alpha))
+                    b_low.append(self.lower_beta)
+                    b_up.append(np.log(self.upper_alpha))
+                    b_up.append(self.r_bmax[0])
+
+            elif transform == 'loglog':
+                
+                if rate[2] == 'vol_ind':
+                    b_low.append(np.log(self.lower_alpha))
+                    b_up.append(np.log(self.upper_alpha))
+                
+                elif rate[2] == 'positive': 
+                    b_low.append(np.log(self.lower_alpha))
+                    b_low.append(np.log(self.lower_beta))
+                    b_up.append(np.log(self.upper_alpha))
+                    b_up.append(np.log(self.f_bmax[0]))
+                elif rate[2] == 'negative':
+                    b_low.append(np.log(self.lower_alpha))
+                    b_low.append(np.log(self.lower_beta))
+                    b_up.append(np.log(self.upper_alpha))
+                    b_up.append(np.log(self.r_bmax[0]))
+
+        if transform == 'loglog':
+            b_low.append(self.minf)
+            b_up.append(0.0)
+            
+        elif transform == 'loglinear':
+            b_low.append(0.0)
+            b_up.append(1.0)
+
+        return [np.array(b_low),np.array(b_up)]
+
     def check_rates(self, rates_dict, parameters):
 
         debug = False
@@ -91,7 +140,6 @@ class ratesPrior(object):
                     if debug: print(names)
                     return self.minf
 
-
         return 0
 
     def _sample_rates(self, v, rate_type):
@@ -105,11 +153,11 @@ class ratesPrior(object):
                 if rate_type == 'negative':
                     b = np.random.uniform(self.lower_beta, self.r_bmax[0])
                 r = a * np.exp(b * v)
-                if r >= self.rmin and r <= self.rmax:
+                if r > self.rmin and r < self.rmax:
                     return a, b
             elif rate_type == 'vol_ind':
                 r = a
-                if r >= self.rmin and r <= self.rmax:
+                if r > self.rmin and r < self.rmax:
                     return a
             
         raise ValueError('Too many iterations')

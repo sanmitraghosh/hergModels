@@ -47,7 +47,7 @@ sys.path.append(os.path.abspath('models_forward'))
 
 import pintsForwardModel as forwardModel
 import LogPrior as prior
-
+import Rates as Rates
 print("loading  model: "+str(args.model))
 model_name ='model-'+str(args.model)
 
@@ -125,6 +125,7 @@ problem = pints.SingleOutputProblem(model, time, current)
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
 log_prior = prior.LogPrior(rate_dict, lower_conductance, n_params,  transform, logTransform=True )
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
+rate_checker = Rates.ratesPrior(lower_conductance)
 
 
 # Run repeated optimisations
@@ -139,18 +140,20 @@ for i in xrange(repeats):
 	# Create optimiser and log transform parameters
 	if transform == 1:
 		x0 = util.transformer('loglinear', x0, rate_dict, True)
+		boundaries = rate_checker._get_boundaries('loglinear', rate_dict)
 	elif transform == 2:
 		x0 = util.transformer('loglog', x0, rate_dict, True)
+		boundaries = rate_checker._get_boundaries('loglog', rate_dict)
 
+	Boundaries = pints.Boundaries(boundaries[0],boundaries[1])
 	
-	#x0[1],x0[3],x0[5],x0[7],x0[9],x0[11] =np.log([x0[1],x0[3],x0[5],x0[7],x0[9],x0[11]])
-	#x0 = np.array(x0)
+	
 	print(x0)
-	opt = pints.Optimisation(log_posterior, x0, method=pints.CMAES)
+	opt = pints.Optimisation(log_posterior, x0, boundaries = Boundaries, method=pints.CMAES)
 	opt.set_max_iterations(None)
 	opt.set_parallel(True)
-	filename = './trial/'+model_name+str(i+1)
-	opt.set_log_to_file(filename, csv=True)
+	#opt.set_log_to_file(filename, csv=True)
+	
 	# Run optimisation
 	try:
 	    with np.errstate(all='ignore'): # Tell numpy not to issue warnings
@@ -159,15 +162,7 @@ for i in xrange(repeats):
 			p = util.transformer('loglinear', p, rate_dict, False)
 		elif transform == 2:
 			p = util.transformer('loglog', p, rate_dict, False)		
-		
-		#tm = np.zeros(n_params)
-		#tm = p
-		#p.setflags(write=1)
-		#p[1],p[3],p[5],p[7],p[9],p[11] =np.exp([p[1],p[3],p[5],p[7],p[9],p[11]])
-		
 
-		func_calls.append(model.func_call)
-		print(func_calls)
 		params.append(p)
 		scores.append(s)
 		
