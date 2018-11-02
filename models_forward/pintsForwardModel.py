@@ -13,7 +13,6 @@ import myokit.pacing as pacing
 import util
 
 
-
 class ForwardModel(pints.ForwardModel):
     """
     Pints ForwardModel that runs simulations with Kylie's model.
@@ -29,7 +28,7 @@ class ForwardModel(pints.ForwardModel):
             Set to True if sine-wave protocol is being used.
 
     """
-    
+
     def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=False, logTransform=False):
 
         # Load model
@@ -38,12 +37,12 @@ class ForwardModel(pints.ForwardModel):
         parameters = np.zeros(n_params)
         for i in xrange(n_params):
             parameters[i] = model.get('ikr.p'+str(i+1)).value()
-        
+
         self.parameters = parameters
         self.n_params = len(parameters)
         self.func_call = 0
         self.rate_dict = rate_dict
-        
+
         # Set reversal potential
         model.get('nernst.EK').set_rhs(erev(temperature))
 
@@ -82,7 +81,7 @@ class ForwardModel(pints.ForwardModel):
 
         self.model = model
         self.n_params = int(n_params)
-  
+
     def n_parameters(self):
         """ See :meth:`pints.ForwardModel.n_parameters)`. """
         return self.n_params
@@ -93,32 +92,33 @@ class ForwardModel(pints.ForwardModel):
 
     def simulate(self, parameters, times):
         # Note: Kylie doesn't do pre-pacing!
-        self.func_call +=1
-        
+        self.func_call += 1
+
         if self.logParam:
             if self.transform_type == 1:
-                parameters = util.transformer('loglinear', parameters, self.rate_dict, False)
+                parameters = util.transformer(
+                    'loglinear', parameters, self.rate_dict, False)
             elif self.transform_type == 2:
-                parameters = util.transformer('loglog', parameters, self.rate_dict, False)
-                    
+                parameters = util.transformer(
+                    'loglog', parameters, self.rate_dict, False)
+
             #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
             #parameters = np.array(parameters)
         # Update model parameters
         for i in xrange(int(self.n_params)):
 
             self.simulation.set_constant('ikr.p'+str(i+1), parameters[i])
-        
-        
+
          # Run
         self.simulation.reset()
         try:
-            
+
             d = self.simulation.run(
                 np.max(times + 0.5 * times[1]),
-                log_times = times,
-                log = ['engine.time', 'ikr.IKr', 'membrane.V']
+                log_times=times,
+                log=['engine.time', 'ikr.IKr', 'membrane.V']
                 #log = ['engine.time', 'ikr.IKr', 'membrane.V', 'ikr.m_inf', 'ikr.h_inf'],
-                ).npview()
+            ).npview()
         except myokit.SimulationError:
             return times * float('inf')
 
@@ -126,7 +126,6 @@ class ForwardModel(pints.ForwardModel):
         self.simulated_v = d['membrane.V']
         #self.simulated_minf = d['ikr.m_inf']
         #self.simulated_hinf = d['ikr.h_inf']
-
 
         # Return
         """
@@ -137,6 +136,7 @@ class ForwardModel(pints.ForwardModel):
 
         """
         return d['ikr.IKr']
+
 
 class Pr1Error(pints.ErrorMeasure):
     def __init__(self, problem):
@@ -154,22 +154,27 @@ class Pr1Error(pints.ErrorMeasure):
 
 
 def erev(temperature):
-	return util.erev(temperature)
+    return util.erev(temperature)
+
 
 def conductance_limit(cell):
-	return util.conductance_limit(cell)
+    return util.conductance_limit(cell)
+
 
 def temperature(cell):
-	return util.temperature(cell)
+    return util.temperature(cell)
+
 
 def capacitance(protocol, dt, *signals):
-	return util.capacitance(protocol, dt, *signals)
+    return util.capacitance(protocol, dt, *signals)
 
-def fetch_parameters(model_name, MCMC=None):
-	root = os.path.abspath('cmaes_results')
-	
-	filename = os.path.join(root,model_name+'-cell-5-cmaes.txt')
-	print(filename)
-	with open(filename, 'r') as f:
-		obtained_parameters = [float(x) for x in f.readlines()]
-	return obtained_parameters
+
+def fetch_parameters(model_name, cell, MCMC=None):
+    root = os.path.abspath('cmaes_results')
+
+    filename = os.path.join(
+        root, model_name+'-cell-' + str(cell) + '-cmaes.txt')
+    print(filename)
+    with open(filename, 'r') as f:
+        obtained_parameters = [float(x) for x in f.readlines()]
+    return obtained_parameters

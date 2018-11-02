@@ -30,9 +30,9 @@ parser.add_argument('--cell', type=int, default=5, metavar='N',
 parser.add_argument('--model', type=int, default=16, metavar='N',
                     help='model number : 1 for C-O-I-IC, 2 for C-O and so on')
 parser.add_argument('--transform', type=int, default=1, metavar='N',
-                    help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog'), \
-    parser.add_argument('--plot', type=bool, default=True, metavar='N',
-                        help='plot fitted traces')
+                    help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog')
+parser.add_argument('--plot', type=bool, default=True, metavar='N',
+                    help='plot fitted traces')
 args = parser.parse_args()
 
 
@@ -120,8 +120,6 @@ problem = pints.SingleOutputProblem(model, time, current)
 #
 # Define log-posterior
 #
-
-
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
 log_prior = prior.LogPrior(
     rate_dict, lower_conductance, n_params,  transform, logTransform=True)

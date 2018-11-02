@@ -3,6 +3,10 @@
 # Fit Kylie's model to Cell 5 data using CMA-ES
 #
 from __future__ import division, print_function
+import models_forward.LogPrior as prior
+import models_forward.pintsForwardModel as forwardModel
+import models_forward.Rates as Rates
+import models_forward.util as util
 import os
 import sys
 import pints
@@ -16,65 +20,62 @@ import matplotlib.pyplot as plt
 
 # Check input arguments
 
-parser = argparse.ArgumentParser(description='Fit all the hERG models to sine wave data')
-parser.add_argument('--cell', type=int, default=5, metavar='N', \
-      help='cell number : 1, 2, ..., 5' )
-parser.add_argument('--model', type=int, default=1, metavar='N', \
-      help='model number : 1 for C-O-I-IC, 2 for C-O and so on' )
-parser.add_argument('--plot', type=bool, default=False, metavar='N', \
-      help='plot fitted traces' )
-parser.add_argument('--niter', type=int, default=100000, metavar='N', \
-      help='number of mcmc iterations' )
-parser.add_argument('--burnin', type=int, default=50000, metavar='N', \
-      help='number of burn-in samples')
+parser = argparse.ArgumentParser(
+    description='Fit all the hERG models to sine wave data')
+parser.add_argument('--cell', type=int, default=5, metavar='N',
+                    help='cell number : 1, 2, ..., 5')
+parser.add_argument('--model', type=int, default=3, metavar='N',
+                    help='model number')
+parser.add_argument('--plot', type=bool, default=False, metavar='N',
+                    help='plot fitted traces')
+parser.add_argument('--transform', type=int, default=1, metavar='N',
+                    help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog')
+parser.add_argument('--niter', type=int, default=100000, metavar='N',
+                    help='number of mcmc iterations')
+parser.add_argument('--burnin', type=int, default=50000, metavar='N',
+                    help='number of burn-in samples')
 args = parser.parse_args()
-sys.path.append(os.path.abspath('models_forward'))
 
-if args.model == 1:	
-	import circularCOIIC as forwardModel
-	model_name ='model-1'
-	print("loading  C-O-I-IC model")
-	
-elif args.model == 2:
-	import linearCOI as forwardModel
-	model_name ='model-2'
-	print("loading  C-O-I model")
+# Import markov models from the models file, and rate dictionaries.
+model_name = 'model-'+str(args.model)
+root = os.path.abspath('models_myokit')
+myo_model = os.path.join(root, model_name + '.mmt')
+root = os.path.abspath('rate_dictionaries')
+rate_file = os.path.join(root, model_name + '-priors.p')
+rate_dict = cPickle.load(open(rate_file, 'rb'))
 
-elif args.model == 3:
-	import linearCCOI as forwardModel
-	print("loading  C-C-O-I model")
-	model_name ='model-3'
-
-elif args.model == 4:
-	import linearCCCOI as forwardModel
-	print("loading  C-C-C-O-I model")
-	model_name ='model-4'
-
-elif args.model == 5:
-	import circularCCOIICIC as forwardModel
-	print("loading  C-C-O-I-IC-IC model")
-	model_name ='model-5'
+print("loading  model: "+str(args.model))
+model_name = 'model-'+str(args.model)
 
 cell = args.cell
+
 #
 # Select data file
 #
 root = os.path.abspath('sine-wave-data')
 print(root)
 data_file = os.path.join(root, 'cell-' + str(cell) + '.csv')
+
+
 #
 # Select protocol file
 #
-protocol_file = os.path.join(root,'steps.mmt')
+protocol_file = os.path.join(root, 'steps.mmt')
+
+
 #
 # Cell-specific parameters
 #
 temperature = forwardModel.temperature(cell)
 lower_conductance = forwardModel.conductance_limit(cell)
+
+
 #
 # Load protocol
 #
 protocol = myokit.load_protocol(protocol_file)
+
+
 #
 # Load data
 #
@@ -83,57 +84,74 @@ time = log.time()
 current = log['current']
 voltage = log['voltage']
 del(log)
+
+
 #
 # Estimate noise from start of data
 # Kylie uses the first 200ms, where I = 0 + noise
 #
 sigma_noise = np.std(current[:2000], ddof=1)
+
+
 #
 # Apply capacitance filter based on protocol
 #
 print('Applying capacitance filtering')
 time, voltage, current = forwardModel.capacitance(
     protocol, 0.1, time, voltage, current)
+
+
 #
 # Create forward model
 #
-model = forwardModel.ForwardModel(protocol, temperature, sine_wave=True, logTransform=False)
+transform = args.transform
+model = forwardModel.ForwardModel(
+    protocol, temperature, myo_model, rate_dict,  transform, sine_wave=True, logTransform=True)
+n_params = model.n_params
 #
 # Define problem
 #
 problem = pints.SingleOutputProblem(model, time, current)
+
+
 #
 # Define log-posterior
 #
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = forwardModel.LogPrior(lower_conductance, logTransform=False)
+log_prior = prior.LogPrior(
+    rate_dict, lower_conductance, n_params,  transform, logTransform=True)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
+rate_checker = Rates.ratesPrior(lower_conductance)
+
 #
 # Run
 #
-initial_parameters = forwardModel.fetch_parameters()
-# Create sampler
-nchains = 1
-npar = log_prior.n_parameters()
-x0 = [initial_parameters] * nchains #+ np.random.uniform(0,1e-5,npar)
+initial_parameters = forwardModel.fetch_parameters(model_name, cell)
 
-mcmc = pints.MCMCSampling(log_posterior, nchains, x0, method=pints.PopulationMCMC)
-#mcmc.set_log_to_file('log.txt')
-mcmc.set_log_to_screen(False)
+# Create sampler
+nchains = 6
+npar = log_prior.n_parameters()
+x0 = [initial_parameters] * nchains  # + np.random.uniform(0,1e-5,npar)
+
+mcmc = pints.MCMCSampling(log_posterior, nchains, x0,
+                          method=pints.AdaptiveCovarianceMCMC)
+# mcmc.set_log_to_file('log.txt')
+mcmc.set_log_to_screen(True)
 iterations = args.niter
 mcmc.set_max_iterations(iterations)
 mcmc.set_parallel(True)
 # Run
-with np.errstate(all='ignore'): # Tell numpy not to issue warnings
-    
+with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
+
     trace = mcmc.run()
     if nchains > 1:
         print('R-hat:')
         print(pints.rhat_all_params(trace))
 # save traces
 root = os.path.abspath('mcmc_results')
-param_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_traces.p')
-cPickle.dump(trace, open(param_filename, 'wb')) 
+param_filename = os.path.join(
+    root, model_name + '-cell-' + str(cell) + '-mcmc_traces.p')
+cPickle.dump(trace, open(param_filename, 'wb'))
 
 burnin = args.burnin
 samples_all_chains = trace[:, burnin:, :]
@@ -142,44 +160,50 @@ sample_chain_1 = samples_all_chains[0]
 
 plot = args.plot
 print(plot)
-# Plot 
+# Plot
 if plot:
-    
+
     root = os.path.abspath('figures/mcmc')
-    ppc_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_ppc.eps')
-    pairplt_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_pairplt.eps')
-    traceplt_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_traceplt.eps')
-    
+    ppc_filename = os.path.join(
+        root, model_name + '-cell-' + str(cell) + '-mcmc_ppc.eps')
+    pairplt_filename = os.path.join(
+        root, model_name + '-cell-' + str(cell) + '-mcmc_pairplt.eps')
+    traceplt_filename = os.path.join(
+        root, model_name + '-cell-' + str(cell) + '-mcmc_traceplt.eps')
 
     new_values = []
     for ind in range(100):
-        ppc_sol=model.simulate(sample_chain_1[ind,:npar], time)
+        ppc_sol = model.simulate(sample_chain_1[ind, :npar], time)
         new_values.append(ppc_sol)
     new_values = np.array(new_values)
     mean_values = np.mean(new_values, axis=0)
     new_values.shape
     plt.figure()
-    plt.subplot(3,1,1)
+    plt.subplot(3, 1, 1)
     plt.plot(time, voltage, color='orange', label='measured voltage')
-    plt.xlim(0,8000)
+    plt.xlim(0, 8000)
     plt.legend()
-    plt.subplot(3,1,2)
-    plt.plot(time, current,'--', color='blue',lw=1.5, label='measured current')
-    plt.plot(time, mean_values, color='SeaGreen', lw=1, label='mean of inferred current')
-    plt.xlim(0,8000)
+    plt.subplot(3, 1, 2)
+    plt.plot(time, current, '--', color='blue',
+             lw=1.5, label='measured current')
+    plt.plot(time, mean_values, color='SeaGreen',
+             lw=1, label='mean of inferred current')
+    plt.xlim(0, 8000)
     plt.legend()
-    plt.subplot(3,1,3)
-    plt.plot(time[-40000:], current[-40000:],'--', color='blue',lw=1.5, label='measured current blow-up')
-    plt.plot(time[-40000:], mean_values[-40000:], color='SeaGreen', lw=1, label='mean of inferred current blow-up')
-    plt.xlim(4000,8000)
+    plt.subplot(3, 1, 3)
+    plt.plot(time[-40000:], current[-40000:], '--', color='blue',
+             lw=1.5, label='measured current blow-up')
+    plt.plot(time[-40000:], mean_values[-40000:], color='SeaGreen',
+             lw=1, label='mean of inferred current blow-up')
+    plt.xlim(4000, 8000)
     plt.legend()
-    plt.savefig(ppc_filename)   
+    plt.savefig(ppc_filename)
     plt.close()
 
-    pplot.pairwise(sample_chain_1[:,:npar], opacity=1)
-    plt.savefig(pairplt_filename)   
+    pplot.pairwise(sample_chain_1[:, :npar], opacity=1)
+    plt.savefig(pairplt_filename)
     plt.close()
 
     pplot.trace(samples_all_chains)
-    plt.savefig(traceplt_filename)   
+    plt.savefig(traceplt_filename)
     plt.close()
