@@ -53,13 +53,7 @@ class LogPrior(pints.LogPrior):
     """    
     def __call__(self, parameters):
         if self.logParam:
-            if self.transform_type == 1:
-                parameters = util.transformer('loglinear', parameters, self.rate_dict, False)
-            elif self.transform_type == 2:
-                parameters = util.transformer('loglog', parameters, self.rate_dict, False)
-            #parameters.setflags(write=1)
-            #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
-            #parameters = np.array(parameters)
+            parameters = util.transformer(self.transform_type, parameters, self.rate_dict, False)
 
         if parameters[-1] < self.lower_conductance:
             return self.minf

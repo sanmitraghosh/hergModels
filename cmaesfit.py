@@ -148,11 +148,10 @@ for i in xrange(repeats):
     print('Initial guess (untransformed model parameters) = ', x0)
 
     # Create optimiser and log transform parameters
+    x0 = util.transformer(transform, x0, rate_dict, True)
     if transform == 1:
-        x0 = util.transformer('loglinear', x0, rate_dict, True)
         boundaries = rate_checker._get_boundaries('loglinear', rate_dict)
     elif transform == 2:
-        x0 = util.transformer('loglog', x0, rate_dict, True)
         boundaries = rate_checker._get_boundaries('loglog', rate_dict)
 
     Boundaries = pints.RectangularBoundaries(boundaries[0], boundaries[1])
@@ -172,10 +171,7 @@ for i in xrange(repeats):
     try:
         with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
             p, s = opt.run()
-            if transform == 1:
-                p = util.transformer('loglinear', p, rate_dict, False)
-            elif transform == 2:
-                p = util.transformer('loglog', p, rate_dict, False)
+            p = util.transformer(transform, p, rate_dict, False)
 
             params.append(p)
             scores.append(s)

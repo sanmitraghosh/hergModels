@@ -95,12 +95,7 @@ class ForwardModel(pints.ForwardModel):
         self.func_call += 1
 
         if self.logParam:
-            if self.transform_type == 1:
-                parameters = util.transformer(
-                    'loglinear', parameters, self.rate_dict, False)
-            elif self.transform_type == 2:
-                parameters = util.transformer(
-                    'loglog', parameters, self.rate_dict, False)
+            parameters = util.transformer(self.transform_type, parameters, self.rate_dict, False)
 
             #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
             #parameters = np.array(parameters)

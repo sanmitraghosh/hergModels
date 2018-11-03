@@ -202,10 +202,12 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
     except KeyError:
         pass
 
+# Last argument is whether we are going True = from model to optimiser, or False from optimiser to model.
 def transformer(transform, parameters, rate_dict, logexp = True):
     txd_params = np.copy(parameters)
-    if transform == 'loglog':
 
+    # First the Log A Linear B case
+    if transform == 1:
         for names, rate in rate_dict.iteritems():
             if rate[2] == 'positive' or rate[2] == 'negative':
                 if logexp:
@@ -224,14 +226,17 @@ def transformer(transform, parameters, rate_dict, logexp = True):
             txd_params[-1] = np.log(txd_params[-1])
         else:
             txd_params[-1] = np.exp(txd_params[-1])
-    if transform == 'loglinear':
+
+    # Now the Log A Log B transform case
+    elif transform == 2:
 
         for names, rate in rate_dict.iteritems():
-
             if logexp:
                 txd_params[rate[0]] = np.log(txd_params[rate[0]])
             else:
                 txd_params[rate[0]] = np.exp(txd_params[rate[0]])
+    else:
+        error('Unrecognised transform type, should be 1=LogLinear or 2=LogLog')
         
     
     return txd_params
