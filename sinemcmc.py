@@ -16,7 +16,9 @@ import cPickle
 import myokit
 import argparse
 import matplotlib.pyplot as plt
+
 # Load a hERG model and prior
+cmaes_result_files = 'cmaes_results/'
 
 # Check input arguments
 
@@ -126,15 +128,26 @@ rate_checker = Rates.ratesPrior(lower_conductance)
 #
 # Run
 #
-initial_parameters = forwardModel.fetch_parameters(model_name, cell)
+nchains = 1
+
+# Define starting point for mcmc routine
+xs = []
+for i in xrange(nchains):
+    x0 = np.loadtxt(cmaes_result_files + model_name + '-cell-' + str(cell) + '-cmaes.txt' )
+    x0 = util.transformer(transform, x0, rate_dict, True)
+    xs.append(x0)
+
+print('MCMC starting point: ')
+for x0 in xs:
+    print(x0)
+print('MCMC starting Log-Likelihood: ')
+for x0 in xs:
+    print(log_posterior(x0))
 
 # Create sampler
-nchains = 6
-npar = log_prior.n_parameters()
-x0 = [initial_parameters] * nchains  # + np.random.uniform(0,1e-5,npar)
-
-mcmc = pints.MCMCSampling(log_posterior, nchains, x0,
+mcmc = pints.MCMCSampling(log_posterior, nchains, xs,
                           method=pints.AdaptiveCovarianceMCMC)
+                          
 # mcmc.set_log_to_file('log.txt')
 mcmc.set_log_to_screen(True)
 iterations = args.niter
@@ -173,7 +186,7 @@ if plot:
 
     new_values = []
     for ind in range(100):
-        ppc_sol = model.simulate(sample_chain_1[ind, :npar], time)
+        ppc_sol = model.simulate(sample_chain_1[ind, :n_params], time)
         new_values.append(ppc_sol)
     new_values = np.array(new_values)
     mean_values = np.mean(new_values, axis=0)
@@ -200,7 +213,7 @@ if plot:
     plt.savefig(ppc_filename)
     plt.close()
 
-    pplot.pairwise(sample_chain_1[:, :npar], opacity=1)
+    pplot.pairwise(sample_chain_1[:, :n_params], opacity=1)
     plt.savefig(pairplt_filename)
     plt.close()
 
