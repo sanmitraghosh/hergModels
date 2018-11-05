@@ -8,14 +8,23 @@ import subprocess
 # Check whether to run optimisation or MCMC
 #
 
-parser = argparse.ArgumentParser(description='Fit all the hERG models to sine wave data')
-parser.add_argument('--mode', type=int, default=1, metavar='N', \
-      help='optimisation: 1, MCMC: 2, ModelStats: 3' )
+parser = argparse.ArgumentParser(
+    description='Fit all the hERG models to sine wave data')
+parser.add_argument('--mode', type=int, default=1, metavar='N',
+                    help='optimisation: 1, AP predictions 2, MCMC: 3, ModelStats: 4')
 
 args = parser.parse_args()
 if args.mode == 1:
-    for i in xrange(31):
-        bashCommand = 'python cmaesfit.py --cell 5 --model '+str(i+1)
+    for i in xrange(30):
+        bashCommand = 'python cmaesfit.py --cell 5 --model ' + str(i+1)
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        print(output)
+
+elif args.mode == 2:
+    for i in xrange(30):
+        bashCommand = 'python make_ap_predictions.py --cell 5 --model ' + \
+            str(i+1)
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         print(output)

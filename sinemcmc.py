@@ -197,23 +197,27 @@ if plot:
     new_values.shape
     plt.figure()
     plt.subplot(3, 1, 1)
-    plt.plot(time, voltage, color='orange', label='measured voltage')
+    plt.plot(time, voltage, color='orange', label='measured voltage', lw=0.5)
     plt.xlim(0, 8000)
     plt.legend()
     plt.subplot(3, 1, 2)
-    plt.plot(time, current, '--', color='blue',
-             lw=1.5, label='measured current')
-    plt.plot(time, mean_values, color='SeaGreen',
-             lw=1, label='mean of inferred current')
+    plt.plot(time, current, '-', color='blue',
+             lw=0.5, label='measured current')
+    for i in xrange(np.size(new_values, axis=0)-1):
+        plt.plot(time, new_values[i, :], color='SeaGreen',
+                 lw=0.5, label='inferred current', alpha=0.05)
     plt.xlim(0, 8000)
-    plt.legend()
+    # plt.legend()
     plt.subplot(3, 1, 3)
-    plt.plot(time[-40000:], current[-40000:], '--', color='blue',
-             lw=1.5, label='measured current blow-up')
-    plt.plot(time[-40000:], mean_values[-40000:], color='SeaGreen',
-             lw=1, label='mean of inferred current blow-up')
-    plt.xlim(4000, 8000)
-    plt.legend()
+    plt.plot(time[-40000:], current[-40000:], '-', color='blue',
+             lw=0.5, label='measured current blow-up')
+    for i in xrange(np.size(new_values, axis=0)-1):
+        plt.plot(time[-40000:], new_values[i, -40000:], color='SeaGreen',
+                 lw=0.5, label='inferred current', alpha=0.05)
+    plt.xlim(4000, 6000)
+    plt.xlabel('Time (ms)')
+    plt.ylabel('Current')
+    # plt.legend()
     plt.savefig(ppc_filename)
     plt.close()
 
