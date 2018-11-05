@@ -10,6 +10,7 @@ import models_forward.util as util
 import os
 import sys
 import pints
+import pints.io
 import pints.plot as pplot
 import numpy as np
 import cPickle
@@ -17,6 +18,7 @@ import random
 import myokit
 import argparse
 import matplotlib.pyplot as plt
+import mcmcsampling
 
 # Load a hERG model and prior
 cmaes_result_files = 'cmaes_results/'
@@ -129,7 +131,7 @@ rate_checker = Rates.ratesPrior(transform, lower_conductance)
 #
 # Run
 #
-nchains = 1
+nchains = 5
 
 # Define starting point for mcmc routine
 xs = []
@@ -149,8 +151,8 @@ for x0 in xs:
     print(log_posterior(x0))
 
 # Create sampler
-mcmc = pints.MCMCSampling(log_posterior, nchains, xs,
-                          method=pints.AdaptiveCovarianceMCMC)
+mcmc = mcmcsampling.MCMCSampling(log_posterior, nchains, xs,
+                                 method=pints.AdaptiveCovarianceMCMC)
 
 # mcmc.set_log_to_file('log.txt')
 mcmc.set_log_to_screen(True)
@@ -160,7 +162,7 @@ mcmc.set_parallel(True)
 # Run
 with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
 
-    trace = mcmc.run()
+    trace, LLs = mcmc.run(returnLL=True)
     if nchains > 1:
         print('R-hat:')
         print(pints.rhat_all_params(trace))
@@ -169,6 +171,11 @@ root = os.path.abspath('mcmc_results')
 param_filename = os.path.join(
     root, model_name + '-cell-' + str(cell) + '-mcmc_traces.p')
 cPickle.dump(trace, open(param_filename, 'wb'))
+pints.io.save_samples('mcmc_results/%s-chain.csv' %
+                      (model_name + '-cell-' + str(cell)), *trace)
+pints.io.save_samples('mcmc_results/%s-LLs.csv' %
+                      (model_name + '-cell-' + str(cell)), LLs)
+
 
 burnin = args.burnin
 samples_all_chains = trace[:, burnin:, :]
@@ -189,7 +196,7 @@ if plot:
         root, model_name + '-cell-' + str(cell) + '-mcmc_traceplt.eps')
 
     new_values = []
-    for ind in random.sample(range(0, np.size(sample_chain_1, axis=0)), 100):
+    for ind in random.sample(range(0, np.size(sample_chain_1, axis=0)), 400):
         ppc_sol = model.simulate(sample_chain_1[ind, :n_params], time)
         new_values.append(ppc_sol)
     new_values = np.array(new_values)

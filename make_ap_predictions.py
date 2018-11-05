@@ -135,24 +135,31 @@ if args.plot:
 
     ap_sol = model.simulate(parameter_set, time)
 
-    plt.figure()
-    plt.subplot(3, 1, 1)
+    plt.figure(figsize=(9, 7))
+    plt.subplot(4, 1, 1)
     plt.plot(time, voltage, color='orange', label='Voltage', lw=0.5)
     plt.xlim(0, 8000)
     plt.xlabel('Time (ms)')
     plt.ylabel('Voltage (mV)')
-    plt.subplot(3, 1, 2)
+    plt.subplot(4, 1, 2)
     plt.plot(time, current, '-', color='blue',
              lw=0.5, label='measured current')
     plt.plot(time, ap_sol, color='SeaGreen',
              lw=0.5, label='inferred current', alpha=0.1)
     plt.xlim(0, 8000)
-    plt.subplot(3, 1, 3)
+    plt.subplot(4, 1, 3)
     plt.plot(time, current, '-', color='blue',
              lw=0.5, label='measured current')
     plt.plot(time, ap_sol, color='SeaGreen',
              lw=0.5, label='inferred current', alpha=0.1)
     plt.xlim(0, 8000)
     plt.ylim(-0.5, 2)
+    plt.subplot(4, 1, 4)
+    plt.plot(time, current, '-', color='blue',
+             lw=0.5, label='measured current')
+    plt.plot(time, ap_sol, color='SeaGreen',
+             lw=0.5, label='inferred current', alpha=0.1)
+    plt.xlim(4000, 4500)
+    plt.ylim(0, 4)
     plt.savefig(ap_filename)
     plt.close()

@@ -28,3 +28,11 @@ elif args.mode == 2:
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         print(output)
+
+elif args.mode == 3:
+    for i in xrange(30):
+        bashCommand = 'python sinemcmc.py --cell 5 --model ' + \
+            str(i+1)
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        print(output)
