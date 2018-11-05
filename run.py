@@ -14,8 +14,8 @@ parser.add_argument('--mode', type=int, default=1, metavar='N', \
 
 args = parser.parse_args()
 if args.mode == 1:
-    for i in xrange(4):
-        bashCommand = 'python sinefit.py --cell 5 --model '+str(i+1)
+    for i in xrange(31):
+        bashCommand = 'python cmaesfit.py --cell 5 --model '+str(i+1)
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         print(output)
