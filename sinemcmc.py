@@ -13,6 +13,7 @@ import pints
 import pints.plot as pplot
 import numpy as np
 import cPickle
+import random
 import myokit
 import argparse
 import matplotlib.pyplot as plt
@@ -120,7 +121,8 @@ problem = pints.SingleOutputProblem(model, time, current)
 # Define log-posterior
 #
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = prior.LogPrior(rate_dict, lower_conductance, n_params, transform)
+log_prior = prior.LogPrior(
+    rate_dict, lower_conductance, n_params, transform)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
@@ -131,16 +133,18 @@ nchains = 1
 
 # Define starting point for mcmc routine
 xs = []
+
+x0 = np.loadtxt(cmaes_result_files + model_name +
+                '-cell-' + str(cell) + '-cmaes.txt')
+print('Model parameters start point: ', x0)
+x0 = util.transformer(transform, x0, rate_dict, True)
 for i in xrange(nchains):
-    x0 = np.loadtxt(cmaes_result_files + model_name +
-                    '-cell-' + str(cell) + '-cmaes.txt')
-    x0 = util.transformer(transform, x0, rate_dict, True)
     xs.append(x0)
 
 print('MCMC starting point: ')
 for x0 in xs:
     print(x0)
-print('MCMC starting Log-Likelihood: ')
+print('MCMC starting Log-Posterior: ')
 for x0 in xs:
     print(log_posterior(x0))
 
@@ -185,10 +189,8 @@ if plot:
         root, model_name + '-cell-' + str(cell) + '-mcmc_traceplt.eps')
 
     new_values = []
-    for ind in range(100):
-        transformed_params = util.transformer(
-            transform, sample_chain_1[ind, :n_params], rate_dict, True)
-        ppc_sol = model.simulate(transformed_params, time)
+    for ind in random.sample(range(0, np.size(sample_chain_1, axis=0)), 100):
+        ppc_sol = model.simulate(sample_chain_1[ind, :n_params], time)
         new_values.append(ppc_sol)
     new_values = np.array(new_values)
     mean_values = np.mean(new_values, axis=0)
