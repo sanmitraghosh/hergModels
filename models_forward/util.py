@@ -45,18 +45,16 @@ def conductance_limit(cell):
     # Guesses for lower conductance
     #
     lower_conductances = {
+        1: 0.0478,  # 16713003
+        2: 0.0255,  # 16715049
+        3: 0.0417,  # 16708016
+        4: 0.0305,  # 16708060
         5: 0.0612,  # 16713110
+        6: 0.0170,  # 16708118
+        7: 0.0886,  # 16704007
+        8: 0.0434,  # 16704047
+        9: 0.0203,  # 16707014
     }
-    # if strcmp(exp_ref,'16708118')==1    lower_conductance = 0.0170;
-    # if strcmp(exp_ref,'16704047')==1    lower_conductance = 0.0434;
-    # if strcmp(exp_ref,'16704007')==1    lower_conductance = 0.0886;
-    # if strcmp(exp_ref,'16707014')==1    lower_conductance = 0.0203;
-    # if strcmp(exp_ref,'16708060')==1    lower_conductance = 0.0305;
-    # if strcmp(exp_ref,'16708016')==1    lower_conductance = 0.0417;
-    # if strcmp(exp_ref,'16713003')==1    lower_conductance = 0.0478;
-    # if strcmp(exp_ref,'16715049')==1    lower_conductance = 0.0255;
-    # if strcmp(exp_ref,'average')==1     lower_conductance = 0.0410;
-
     return lower_conductances[cell]
 
 
@@ -66,16 +64,16 @@ def temperature(cell):
     ``cell``.
     """
     temperatures = {
-        5: 21.4,   # 16713110
+        1: 21.3,    # 16713003
+        2: 21.4,    # 16715049
+        3: 21.8,    # 16708016
+        4: 21.7,    # 16708060
+        5: 21.4,    # 16713110
+        6: 21.7,    # 16708118
+        7: 21.2,    # 16704007
+        8: 21.6,    # 16704047
+        9: 21.4,    # 16707014
     }
-    # if strcmp(exp_ref,'16708016')==1    temperature = 21.8;
-    # if strcmp(exp_ref,'16708060')==1    temperature = 21.7;
-    # if strcmp(exp_ref,'16704047')==1    temperature = 21.6;
-    # if strcmp(exp_ref,'16704007')==1    temperature = 21.2;
-    # if strcmp(exp_ref,'16713003')==1    temperature = 21.3;
-    # if strcmp(exp_ref,'16715049')==1    temperature = 21.4;
-    # if strcmp(exp_ref,'16707014')==1    temperature = 21.4;
-    # if strcmp(exp_ref,'16708118')==1    temperature = 21.7;
 
     return temperatures[cell]
 
