@@ -8,31 +8,29 @@ from __future__ import print_function
 import os
 import pints
 import numpy as np
-import json 
+import json
 import operator
 import util
 from Rates import ratesPrior
+
 
 class LogPrior(pints.LogPrior):
     """
     Unnormalised prior with constraint on the rate constants.
     """
-    def __init__(self, rate_dict, lower_conductance, n_params,  transform_type, logTransform = False):
+
+    def __init__(self, rate_dict, lower_conductance, n_params,  transform_type):
         super(LogPrior, self).__init__()
-        
+
         self.lower_conductance = lower_conductance
         self.upper_conductance = 10 * lower_conductance
         self.minf = -float(np.inf)
-        #sorted_rate_dict = sorted(d.items(), key=lambda x: x[1]) #sorted(rate_dict.items(), key=operator.itemgetter(0))
-        #sorted_rate_dict
+        # sorted_rate_dict = sorted(d.items(), key=lambda x: x[1]) #sorted(rate_dict.items(), key=operator.itemgetter(0))
+        # sorted_rate_dict
         self.rate_dict = rate_dict
         self.n_params = n_params
-        if logTransform:
-            self.logParam = True
-            self.transform_type = transform_type
-        else:
-            self.logParam = False
-        
+        self.transform_type = transform_type
+
     def n_parameters(self):
         return self.n_params
 
@@ -50,29 +48,28 @@ class LogPrior(pints.LogPrior):
                 i += 2
         
         return self.rate_dict
-    """    
+    """
+
     def __call__(self, parameters):
-        if self.logParam:
-            parameters = util.transformer(self.transform_type, parameters, self.rate_dict, False)
+        params = util.transformer(
+            self.transform_type, parameters, self.rate_dict, False)
 
-        if parameters[-1] < self.lower_conductance:
+        if params[-1] < self.lower_conductance:
             return self.minf
-        if parameters[-1] > self.upper_conductance:
+        if params[-1] > self.upper_conductance:
             return self.minf
 
-        #rate_dict = self._get_rates(parameters)
-         
-        
-        rate_checker = ratesPrior(self.lower_conductance)
-        return rate_checker.check_rates(self.rate_dict, parameters)
+        #rate_dict = self._get_rates(params)
+
+        rate_checker = ratesPrior(self.transform_type, self.lower_conductance)
+        return rate_checker.check_rates(self.rate_dict, params)
 
     def sample(self):
 
-        rate_checker = ratesPrior(self.lower_conductance)
+        rate_checker = ratesPrior(self.transform_type, self.lower_conductance)
         # dummy parameters passed to highlight rate directions (Fw/Bw)
         #rate_dict = self._get_rates(np.zeros(self.n_params-1))
-        
+
         params = rate_checker._sample_partial(self.rate_dict)
 
         return params
-              

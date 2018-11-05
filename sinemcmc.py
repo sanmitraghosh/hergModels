@@ -108,7 +108,7 @@ time, voltage, current = forwardModel.capacitance(
 #
 transform = args.transform
 model = forwardModel.ForwardModel(
-    protocol, temperature, myo_model, rate_dict,  transform, sine_wave=True, logTransform=True)
+    protocol, temperature, myo_model, rate_dict,  transform, sine_wave=True)
 n_params = model.n_params
 #
 # Define problem
@@ -120,10 +120,9 @@ problem = pints.SingleOutputProblem(model, time, current)
 # Define log-posterior
 #
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = prior.LogPrior(
-    rate_dict, lower_conductance, n_params,  transform, logTransform=True)
+log_prior = prior.LogPrior(rate_dict, lower_conductance, n_params, transform)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
-rate_checker = Rates.ratesPrior(lower_conductance)
+rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 #
 # Run
@@ -133,7 +132,8 @@ nchains = 1
 # Define starting point for mcmc routine
 xs = []
 for i in xrange(nchains):
-    x0 = np.loadtxt(cmaes_result_files + model_name + '-cell-' + str(cell) + '-cmaes.txt' )
+    x0 = np.loadtxt(cmaes_result_files + model_name +
+                    '-cell-' + str(cell) + '-cmaes.txt')
     x0 = util.transformer(transform, x0, rate_dict, True)
     xs.append(x0)
 
@@ -147,7 +147,7 @@ for x0 in xs:
 # Create sampler
 mcmc = pints.MCMCSampling(log_posterior, nchains, xs,
                           method=pints.AdaptiveCovarianceMCMC)
-                          
+
 # mcmc.set_log_to_file('log.txt')
 mcmc.set_log_to_screen(True)
 iterations = args.niter

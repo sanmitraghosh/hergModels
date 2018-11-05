@@ -30,7 +30,7 @@ parser.add_argument('--cell', type=int, default=5, metavar='N',
 parser.add_argument('--model', type=int, default=16, metavar='N',
                     help='model number : 1 for C-O-I-IC, 2 for C-O and so on')
 parser.add_argument('--transform', type=int, default=1, metavar='N',
-                    help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog')
+                    help='Choose between loglog/loglinear parameter transform : 0 for no transform, 1 for loglinear, 2 for loglog')
 parser.add_argument('--plot', type=bool, default=True, metavar='N',
                     help='plot fitted traces')
 args = parser.parse_args()
@@ -109,7 +109,7 @@ time, voltage, current = forwardModel.capacitance(
 #
 transform = args.transform
 model = forwardModel.ForwardModel(
-    protocol, temperature, myo_model, rate_dict,  transform, sine_wave=True, logTransform=True)
+    protocol, temperature, myo_model, rate_dict, transform, sine_wave=True)
 n_params = model.n_params
 #
 # Define problem
@@ -122,9 +122,9 @@ problem = pints.SingleOutputProblem(model, time, current)
 #
 log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
 log_prior = prior.LogPrior(
-    rate_dict, lower_conductance, n_params,  transform, logTransform=True)
+    rate_dict, lower_conductance, n_params, transform)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
-rate_checker = Rates.ratesPrior(lower_conductance)
+rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 
 # Run repeated optimisations
@@ -149,11 +149,7 @@ for i in xrange(repeats):
 
     # Create optimiser and log transform parameters
     x0 = util.transformer(transform, x0, rate_dict, True)
-    if transform == 1:
-        boundaries = rate_checker._get_boundaries('loglinear', rate_dict)
-    elif transform == 2:
-        boundaries = rate_checker._get_boundaries('loglog', rate_dict)
-
+    boundaries = rate_checker._get_boundaries(rate_dict)
     Boundaries = pints.RectangularBoundaries(boundaries[0], boundaries[1])
 
     print('Initial guess LogLikelihood = ', log_likelihood(x0))

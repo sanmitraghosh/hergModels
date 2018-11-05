@@ -20,6 +20,7 @@ def erev(temperature):
     k_o = 4.0
     return ((R*T)/F) * np.log(k_o/K_i)
 
+
 class Pr1Error(pints.ErrorMeasure):
     def __init__(self, problem):
         self._problem = problem
@@ -46,15 +47,15 @@ def conductance_limit(cell):
     lower_conductances = {
         5: 0.0612,  # 16713110
     }
-    #if strcmp(exp_ref,'16708118')==1    lower_conductance = 0.0170;
-    #if strcmp(exp_ref,'16704047')==1    lower_conductance = 0.0434;
-    #if strcmp(exp_ref,'16704007')==1    lower_conductance = 0.0886;
-    #if strcmp(exp_ref,'16707014')==1    lower_conductance = 0.0203;
-    #if strcmp(exp_ref,'16708060')==1    lower_conductance = 0.0305;
-    #if strcmp(exp_ref,'16708016')==1    lower_conductance = 0.0417;
-    #if strcmp(exp_ref,'16713003')==1    lower_conductance = 0.0478;
-    #if strcmp(exp_ref,'16715049')==1    lower_conductance = 0.0255;
-    #if strcmp(exp_ref,'average')==1     lower_conductance = 0.0410;
+    # if strcmp(exp_ref,'16708118')==1    lower_conductance = 0.0170;
+    # if strcmp(exp_ref,'16704047')==1    lower_conductance = 0.0434;
+    # if strcmp(exp_ref,'16704007')==1    lower_conductance = 0.0886;
+    # if strcmp(exp_ref,'16707014')==1    lower_conductance = 0.0203;
+    # if strcmp(exp_ref,'16708060')==1    lower_conductance = 0.0305;
+    # if strcmp(exp_ref,'16708016')==1    lower_conductance = 0.0417;
+    # if strcmp(exp_ref,'16713003')==1    lower_conductance = 0.0478;
+    # if strcmp(exp_ref,'16715049')==1    lower_conductance = 0.0255;
+    # if strcmp(exp_ref,'average')==1     lower_conductance = 0.0410;
 
     return lower_conductances[cell]
 
@@ -65,16 +66,16 @@ def temperature(cell):
     ``cell``.
     """
     temperatures = {
-        5 : 21.4,   # 16713110
+        5: 21.4,   # 16713110
     }
-    #if strcmp(exp_ref,'16708016')==1    temperature = 21.8;
-    #if strcmp(exp_ref,'16708060')==1    temperature = 21.7;
-    #if strcmp(exp_ref,'16704047')==1    temperature = 21.6;
-    #if strcmp(exp_ref,'16704007')==1    temperature = 21.2;
-    #if strcmp(exp_ref,'16713003')==1    temperature = 21.3;
-    #if strcmp(exp_ref,'16715049')==1    temperature = 21.4;
-    #if strcmp(exp_ref,'16707014')==1    temperature = 21.4;
-    #if strcmp(exp_ref,'16708118')==1    temperature = 21.7;
+    # if strcmp(exp_ref,'16708016')==1    temperature = 21.8;
+    # if strcmp(exp_ref,'16708060')==1    temperature = 21.7;
+    # if strcmp(exp_ref,'16704047')==1    temperature = 21.6;
+    # if strcmp(exp_ref,'16704007')==1    temperature = 21.2;
+    # if strcmp(exp_ref,'16713003')==1    temperature = 21.3;
+    # if strcmp(exp_ref,'16715049')==1    temperature = 21.4;
+    # if strcmp(exp_ref,'16707014')==1    temperature = 21.4;
+    # if strcmp(exp_ref,'16708118')==1    temperature = 21.7;
 
     return temperatures[cell]
 
@@ -102,21 +103,21 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
     """
     # Points to split signal at
     splits = {
-        'pr1-activation-kinetics-1' : [
+        'pr1-activation-kinetics-1': [
             # Numbers 2, 3, and 4 are a bit off for some reason
             0, 51770, 103519, 155269, 207019, 258770, 310520,
         ],
-        'pr2-activation-kinetics-2' : [
+        'pr2-activation-kinetics-2': [
             0, 51770, 103519, 155269, 207019, 258770, 310520,
         ],
-        'pr3-steady-activation' : [
+        'pr3-steady-activation': [
             0, 82280, 164609, 246889, 329169, 411449, 493729, 576010,
         ],
-        'pr4-inactivation' : [
+        'pr4-inactivation': [
             0, 28657, 57363, 86019, 114674, 143331, 171987, 200642, 229299,
             257955, 286611, 315267, 343922, 372578, 401235, 429891, 458546,
         ],
-        'pr5-deactivation' : [
+        'pr5-deactivation': [
             0, 102974, 205897, 308822, 411746, 514670, 617593, 720518, 823442,
             926366,
         ],
@@ -129,11 +130,11 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
     except KeyError:
         # Try to auto-detect!
         repeats = {
-            'pr1-activation-kinetics-1' : 6,
-            'pr2-activation-kinetics-2' : 6,
-            'pr3-steady-activation' : 7,
-            'pr4-inactivation' : 16,
-            'pr5-deactivation' : 9,
+            'pr1-activation-kinetics-1': 6,
+            'pr2-activation-kinetics-2': 6,
+            'pr3-steady-activation': 7,
+            'pr4-inactivation': 16,
+            'pr5-deactivation': 9,
         }
         period = (time[-1] + 0.1) / repeats[protocol]
         print('Period: ' + str(period))
@@ -154,11 +155,11 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
 
     # Define zoom points
     zoom = {
-        #'pr1-activation-kinetics-1' : (),
-        #'pr2-activation-kinetics-2' : (),
-        'pr3-steady-activation' : ((500, 6500), (-0.1, 1.75)),
-        'pr4-inactivation' : ((1180, 1500), (-3.2, 6.5)),
-        'pr5-deactivation' : ((2300, 8000), (-4, 2)),
+        # 'pr1-activation-kinetics-1' : (),
+        # 'pr2-activation-kinetics-2' : (),
+        'pr3-steady-activation': ((500, 6500), (-0.1, 1.75)),
+        'pr4-inactivation': ((1180, 1500), (-3.2, 6.5)),
+        'pr5-deactivation': ((2300, 8000), (-4, 2)),
     }
 
     # Load matplotlib
@@ -203,58 +204,29 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
         pass
 
 # Last argument is whether we are going True = from model to optimiser, or False from optimiser to model.
-def transformer(transform, parameters, rate_dict, logexp = True):
+
+
+def transformer(transform, parameters, rate_dict, logexp=True):
     txd_params = np.copy(parameters)
-
-    # First the Log A Linear B case
-    if transform == 1:
-        for names, rate in rate_dict.iteritems():
-            if rate[2] == 'positive' or rate[2] == 'negative':
-                if logexp:
-                    txd_params[rate[0]] = np.log(txd_params[rate[0]])
-                    txd_params[rate[1]] = np.log(txd_params[rate[1]])
-                else:
-                    txd_params[rate[0]] = np.exp(txd_params[rate[0]])
-                    txd_params[rate[1]] = np.exp(txd_params[rate[1]])
-            if rate[2] == 'vol_ind':
-                if logexp:
-                    txd_params[rate[0]] = np.log(txd_params[rate[0]])
-                    
-                else:
-                    txd_params[rate[0]] = np.exp(txd_params[rate[0]])
-        if logexp:
-            txd_params[-1] = np.log(txd_params[-1])
-        else:
-            txd_params[-1] = np.exp(txd_params[-1])
-
-    # Now the Log A Log B transform case
-    elif transform == 2:
-
+    # First the no transform case.
+    if transform == 0:
+        return txd_params
+    # Then the Log A Linear B, linear conductance case
+    elif transform == 1:
         for names, rate in rate_dict.iteritems():
             if logexp:
                 txd_params[rate[0]] = np.log(txd_params[rate[0]])
             else:
                 txd_params[rate[0]] = np.exp(txd_params[rate[0]])
+
+    # Now the Log everything transform case
+    elif transform == 2:
+        if logexp:
+            txd_params = np.log(txd_params)
+        else:
+            txd_params = np.exp(txd_params)
     else:
-        error('Unrecognised transform type, should be 1=LogLinear or 2=LogLog')
-        
-    
+        Exception(
+            'Unrecognised transform type, should be 0=Nothing, 1=LogLinear or 2=LogLog')
+
     return txd_params
-            
-                    
-                        
-
-    
-    	
-
-
-
-
-
-
-
-
-
-
-
-

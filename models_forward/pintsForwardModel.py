@@ -29,7 +29,7 @@ class ForwardModel(pints.ForwardModel):
 
     """
 
-    def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=False, logTransform=False):
+    def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=False):
 
         # Load model
         model = myokit.load_model(myo_model)
@@ -72,12 +72,9 @@ class ForwardModel(pints.ForwardModel):
 
         # Set solver tolerances to values used by Kylie
         self.simulation.set_tolerance(1e-8, 1e-8)
-        # Don't log transform params unless specified
-        if logTransform:
-            self.logParam = True
-            self.transform_type = transform_type
-        else:
-            self.logParam = False
+
+        # Store the parameter transform type 0=none, 1=log(A)Linear(B), 2= log everything
+        self.transform_type = transform_type
 
         self.model = model
         self.n_params = int(n_params)
@@ -94,14 +91,11 @@ class ForwardModel(pints.ForwardModel):
         # Note: Kylie doesn't do pre-pacing!
         self.func_call += 1
 
-        if self.logParam:
-            parameters = util.transformer(self.transform_type, parameters, self.rate_dict, False)
+        parameters = util.transformer(
+            self.transform_type, parameters, self.rate_dict, False)
 
-            #parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11] =np.exp([parameters[1],parameters[3],parameters[5],parameters[7],parameters[9],parameters[11]])
-            #parameters = np.array(parameters)
         # Update model parameters
         for i in xrange(int(self.n_params)):
-
             self.simulation.set_constant('ikr.p'+str(i+1), parameters[i])
 
          # Run
