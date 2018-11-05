@@ -223,8 +223,6 @@ if plot:
     root = os.path.abspath('figures/cmaesfit')
     fig_filename = os.path.join(
         root, model_name + '-cell-' + str(cell) + '-cmaes_test.eps')
-    model = forwardModel.ForwardModel(
-        protocol, temperature, myo_model, rate_dict, transform, sine_wave=True)
     print('Writing plot to ', fig_filename)
 
     plt.figure()
@@ -232,7 +230,8 @@ if plot:
     # plt.plot(time, voltage)
     plt.subplot(2, 1, 2)
     plt.plot(time, current, label='real')
-    plt.plot(time, model.simulate(obtained_parameters, time), label='fit')
+    plt.plot(time, model.simulate(util.transformer(
+        transform, obtained_parameters, rate_dict, True), time), label='fit')
     plt.legend(loc='lower right')
     plt.savefig(fig_filename)   # save the figure to file
     plt.close()

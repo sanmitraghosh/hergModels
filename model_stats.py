@@ -181,7 +181,7 @@ for i in xrange(5):
     #
     # Create forward model
     #
-    model = forwardModel.ForwardModel(protocol_sine, temperature, sine_wave=True, logTransform=False)
+    model = forwardModel.ForwardModel(protocol_sine, temperature, sine_wave=True)
 
     root = os.path.abspath('mcmc_results')
     param_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_traces.p')
@@ -199,7 +199,7 @@ for i in xrange(5):
     sigma_noise_sine = np.std(current[:2000], ddof=1)
     problem_sine = pints.SingleOutputProblem(model, time_sine, current_sine)
     #log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise_sine)
-    log_prior = forwardModel.LogPrior(lower_conductance, logTransform=False)
+    log_prior = forwardModel.LogPrior(transform, lower_conductance)
     #log_posterior = pints.LogPosterior(log_likelihood, log_prior)
      
     waic_train = waic(problem_sine, samples_waic, current_sine, sigma_noise_sine)[0]

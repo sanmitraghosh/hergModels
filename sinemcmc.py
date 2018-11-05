@@ -28,7 +28,7 @@ parser.add_argument('--cell', type=int, default=5, metavar='N',
                     help='cell number : 1, 2, ..., 5')
 parser.add_argument('--model', type=int, default=3, metavar='N',
                     help='model number')
-parser.add_argument('--plot', type=bool, default=False, metavar='N',
+parser.add_argument('--plot', type=bool, default=True, metavar='N',
                     help='plot fitted traces')
 parser.add_argument('--transform', type=int, default=1, metavar='N',
                     help='Choose between loglog/loglinear parameter transform : 1 for loglinear, 2 for loglog')
@@ -186,7 +186,9 @@ if plot:
 
     new_values = []
     for ind in range(100):
-        ppc_sol = model.simulate(sample_chain_1[ind, :n_params], time)
+        transformed_params = util.transformer(
+            transform, sample_chain_1[ind, :n_params], rate_dict, True)
+        ppc_sol = model.simulate(transformed_params, time)
         new_values.append(ppc_sol)
     new_values = np.array(new_values)
     mean_values = np.mean(new_values, axis=0)
