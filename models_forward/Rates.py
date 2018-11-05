@@ -45,7 +45,7 @@ class ratesPrior(object):
         r_bmax = (-1 / self.vmin) * (np.log(self.rmax) - np.log(a))
         self.r_bmin = np.maximum(r_bmin, self.lower_beta)
         self.r_bmax = np.minimum(r_bmax, self.upper_beta)
-        #self.r_bmax[0] =  self.upper_beta
+        # self.r_bmax[0] =  self.upper_beta
 
     def _get_boundaries(self, rates_dict):
         b_low = []  # np.zeros(2*len(rates_dict)+1)
@@ -168,26 +168,39 @@ class ratesPrior(object):
         return 0
 
     def _sample_rates(self, v, rate_type):
-        i = 0
-        while i == 0:
-            a = np.exp(np.random.uniform(
-                np.log(self.lower_alpha), np.log(self.upper_alpha)))
+
+        while True:
+            if self.transform == 0:
+                a = np.random.uniform(self.lower_alpha, self.upper_alpha)
+            elif self.transform >= 1:
+                a = np.exp(np.random.uniform(
+                    np.log(self.lower_alpha), np.log(self.upper_alpha)))
 
             if rate_type == 'positive' or rate_type == 'negative':
                 if rate_type == 'positive':
-                    b = np.random.uniform(self.lower_beta, self.f_bmax[0])
+                    if self.transform <= 1:
+                        b = np.random.uniform(self.lower_beta, self.f_bmax[0])
+                    elif self.transform == 2:
+                        b = np.exp(np.random.uniform(
+                            np.log(self.lower_beta), np.log(self.f_bmax[0])))
+                    else:
+                        Exception('Unrecognised transform')
                     r = a * np.exp(b * v)
                 elif rate_type == 'negative':
-                    b = np.random.uniform(self.lower_beta, self.r_bmax[0])
+                    if self.transform <= 1:
+                        b = np.random.uniform(self.lower_beta, self.r_bmax[0])
+                    elif self.transform == 2:
+                        b = np.exp(np.random.uniform(
+                            np.log(self.lower_beta), np.log(self.r_bmax[0])))
+                    else:
+                        Exception('Unrecognised transform')
                     r = a * np.exp(-b * v)
                 if r > self.rmin and r < self.rmax:
-                    i = 1
                     return a, b
 
             elif rate_type == 'vol_ind':
                 r = a
                 if r > self.rmin and r < self.rmax:
-                    i = 1
                     return a
 
         raise ValueError('Too many iterations')
@@ -212,10 +225,20 @@ class ratesPrior(object):
                 a, b = self._sample_rates(self.vmin, rate[2])
                 p.append(a)
                 p.append(b)
+            else:
+                Exception(
+                    'Unrecognised rate type - should be ''positive'', ''negative'', or ''vol_ind''.')
 
-        # Sample conductance
-        p.append(np.random.uniform(
-            self.lower_conductance, self.upper_conductance))
+        # Sample conductance - linear for transforms=0 or 1, log for transform=2
+        if self.transform <= 1:
+            p.append(np.random.uniform(
+                self.lower_conductance, self.upper_conductance))
+        elif self.transform == 2:
+            p.append(np.exp(np.random.uniform(
+                np.log(self.lower_conductance), np.log(self.upper_conductance))))
+        else:
+            Exception('Unrecognised transform')
+
         p = np.asarray(p)
         print(p)
 
