@@ -224,7 +224,7 @@ if plot:
     fig_filename = os.path.join(
         root, model_name + '-cell-' + str(cell) + '-cmaes_test.eps')
     model = forwardModel.ForwardModel(
-        protocol, temperature, myo_model, rate_dict, transform, sine_wave=True, logTransform=False)
+        protocol, temperature, myo_model, rate_dict, transform, sine_wave=True)
     print('Writing plot to ', fig_filename)
 
     plt.figure()
