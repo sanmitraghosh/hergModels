@@ -222,7 +222,7 @@ plot = args.plot
 if plot:
     root = os.path.abspath('figures/cmaesfit')
     fig_filename = os.path.join(
-        root, model_name + '-cell-' + str(cell) + '-cmaes_test.eps')
+        root, model_name + '-cell-' + str(cell) + '-cmaes.eps')
     print('Writing plot to ', fig_filename)
 
     plt.figure()
