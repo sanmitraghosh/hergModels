@@ -140,16 +140,16 @@ func_calls = []
 for i in xrange(args.repeats):
     # Choose random starting point
 
-#    if i == 0:
-    gary_guess = []
-    for j in xrange(int(n_params/2)):
-        gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
-        gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
-    gary_guess.append(2*lower_conductance)
+    if i == 0:
+        gary_guess = []
+        for j in xrange(int(n_params/2)):
+            gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
+            gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
+        gary_guess.append(2*lower_conductance)
 
-    x0 = np.array(gary_guess)
- #   else:
-  #      x0 = log_prior.sample()
+        x0 = np.array(gary_guess)
+    else:
+        x0 = log_prior.sample()
     print('Initial guess (untransformed model parameters) = ', x0)
 
     # Create optimiser and log transform parameters
