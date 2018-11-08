@@ -123,8 +123,10 @@ parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
 parser.add_argument('--points', type=int, default=5000, metavar='N', \
       help='number of samples to compute WAIC')
+parser.add_argument('--mcmc', type=bool, default=True, metavar='N',
+                    help='get model stats for mcmc or optimisation')
 args = parser.parse_args()
-sys.path.append(os.path.abspath('models_forward'))
+#sys.path.append(os.path.abspath('models_forward'))
 
 cell = args.cell
 root = os.path.abspath('sine-wave-data')
