@@ -27,8 +27,10 @@ parser = argparse.ArgumentParser(
     description='Fit all the hERG models to sine wave data')
 parser.add_argument('--cell', type=int, default=5, metavar='N',
                     help='cell number : 1, 2, ..., 5')
-parser.add_argument('--model', type=int, default=16, metavar='N',
-                    help='model number : 1 for C-O-I-IC, 2 for C-O and so on')
+parser.add_argument('--model', type=int, default=3, metavar='N',
+                    help='model number : 1 for C-O, 2 for C-O-I and so on')
+parser.add_argument('--repeats', type=int, default=10, metavar='N',
+                    help='number of CMA-ES runs from different initial guesses')
 parser.add_argument('--transform', type=int, default=1, metavar='N',
                     help='Choose between loglog/loglinear parameter transform : 0 for no transform, 1 for loglinear, 2 for loglog')
 parser.add_argument('--plot', type=bool, default=True, metavar='N',
@@ -45,6 +47,10 @@ rate_file = os.path.join(root, model_name + '-priors.p')
 rate_dict = cPickle.load(open(rate_file, 'rb'))
 
 sys.path.append(os.path.abspath('models_forward'))
+
+results_log_folder = 'cmaes_results/individual_runs'
+if not os.path.exists(results_log_folder):
+    os.makedirs(results_log_folder)
 
 
 print("loading  model: "+str(args.model))
@@ -128,23 +134,22 @@ rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 
 # Run repeated optimisations
-repeats = 5
 params, scores = [], []
 
 func_calls = []
-for i in xrange(repeats):
+for i in xrange(args.repeats):
     # Choose random starting point
 
-    if i == 0:
-        gary_guess = []
-        for j in xrange(int(n_params/2)):
-            gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
-            gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
-        gary_guess.append(2*lower_conductance)
+#    if i == 0:
+    gary_guess = []
+    for j in xrange(int(n_params/2)):
+        gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
+        gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
+    gary_guess.append(2*lower_conductance)
 
-        x0 = np.array(gary_guess)
-    else:
-        x0 = log_prior.sample()
+    x0 = np.array(gary_guess)
+ #   else:
+  #      x0 = log_prior.sample()
     print('Initial guess (untransformed model parameters) = ', x0)
 
     # Create optimiser and log transform parameters
@@ -161,7 +166,10 @@ for i in xrange(repeats):
         log_posterior, x0, boundaries=Boundaries, method=pints.CMAES)
     opt.set_max_iterations(None)
     opt.set_parallel(True)
-    # opt.set_log_to_file(filename, csv=True)
+    log_filename = model_name + '_cell_' + \
+        str(cell) + '_transform_' + str(transform) + \
+        '_cmaes_run_' + str(i) + '.log'
+    opt.set_log_to_file(results_log_folder + '/' + log_filename, csv=True)
 
     # Run optimisation
     try:
@@ -183,15 +191,15 @@ params = np.asarray(params)[order]
 
 # Show results
 
-if repeats > 1:
+if args.repeats > 2:
     print('Best 3 scores:')
     for i in xrange(3):
         print(scores[i])
-        print('Mean & std of score:')
-        print(np.mean(scores))
-        print(np.std(scores))
-        print('Worst score:')
-        print(scores[-1])
+    print('Mean & std of score:')
+    print(np.mean(scores))
+    print(np.std(scores))
+    print('Worst score:')
+    print(scores[-1])
 else:
     print('Score:')
     print(scores)
