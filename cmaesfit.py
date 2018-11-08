@@ -111,6 +111,7 @@ transform = args.transform
 model = forwardModel.ForwardModel(
     protocol, temperature, myo_model, rate_dict, transform, sine_wave=True)
 n_params = model.n_params
+
 #
 # Define problem
 #
@@ -128,7 +129,7 @@ rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 
 # Run repeated optimisations
-repeats = 5
+repeats = 1
 params, scores = [], []
 
 func_calls = []
@@ -159,7 +160,7 @@ for i in xrange(repeats):
     print('Initial guess (transformed optimisation parameters) = ', x0)
     opt = pints.Optimisation(
         log_posterior, x0, boundaries=Boundaries, method=pints.CMAES)
-    opt.set_max_iterations(None)
+    opt.set_max_iterations(20)
     opt.set_parallel(True)
     # opt.set_log_to_file(filename, csv=True)
 
@@ -227,7 +228,7 @@ if plot:
 
     plt.figure()
     plt.subplot(2, 1, 1)
-    # plt.plot(time, voltage)
+    plt.plot(time, voltage)
     plt.subplot(2, 1, 2)
     plt.plot(time, current, label='real')
     plt.plot(time, model.simulate(util.transformer(
