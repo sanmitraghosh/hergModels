@@ -168,6 +168,8 @@ with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
         print(pints.rhat_all_params(trace))
 # save traces
 root = os.path.abspath('mcmc_results')
+if not os.path.exists(root):
+    os.makedirs(root)
 param_filename = os.path.join(
     root, model_name + '-cell-' + str(cell) + '-mcmc_traces.p')
 cPickle.dump(trace, open(param_filename, 'wb'))
@@ -187,7 +189,10 @@ print(plot)
 # Plot
 if plot:
 
-    root = os.path.abspath('figures/mcmc')
+    root = os.path.abspath('figures/mcmc')    
+    if not os.path.exists(root):
+        os.makedirs(root)
+
     ppc_filename = os.path.join(
         root, model_name + '-cell-' + str(cell) + '-mcmc_ppc.eps')
     pairplt_filename = os.path.join(
