@@ -237,10 +237,13 @@ if plot:
     plt.figure()
     plt.subplot(2, 1, 1)
     plt.plot(time, voltage)
+    plt.ylabel('Voltage (mV)')
     plt.subplot(2, 1, 2)
     plt.plot(time, current, label='real')
     plt.plot(time, model.simulate(util.transformer(
         transform, obtained_parameters, rate_dict, True), time), label='fit')
     plt.legend(loc='lower right')
+    plt.xlabel('Time (ms)')
+    plt.ylabel('Current (nA)')
     plt.savefig(fig_filename)   # save the figure to file
     plt.close()
