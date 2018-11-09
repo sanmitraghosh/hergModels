@@ -135,7 +135,6 @@ rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 
 # Run repeated optimisations
-repeats = 10
 params, scores = [], []
 
 func_calls = []
