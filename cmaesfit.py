@@ -70,20 +70,13 @@ data_file = os.path.join(root, 'cell-' + str(cell) + '.csv')
 # Select protocol file
 #
 protocol_file = os.path.join(root, 'steps.mmt')
-
+protocol = myokit.load_protocol(protocol_file)
 
 #
 # Cell-specific parameters
 #
 temperature = forwardModel.temperature(cell)
 lower_conductance = forwardModel.conductance_limit(cell)
-
-
-#
-# Load protocol
-#
-protocol = myokit.load_protocol(protocol_file)
-
 
 #
 # Load data
@@ -211,13 +204,33 @@ else:
 obtained_log_posterior = scores[0]
 obtained_parameters = params[0]
 
+transformed_best_params = util.transformer(transform, obtained_parameters, rate_dict, True)
+obtained_log_likelihood = log_likelihood(transformed_best_params)
+print('Log likelihood for best parameter set is: ', obtained_log_likelihood)
+
 root = os.path.abspath('cmaes_results')
 cmaes_filename = os.path.join(
     root, model_name + '-cell-' + str(cell) + '-cmaes.txt')
 
-with open(cmaes_filename, 'w') as f:
-    for x in obtained_parameters:
-        f.write(pints.strfloat(x) + '\n')
+write_out_results = False
+
+# Check to see if we have done a minimisation before
+if os.file.exists(cmaes_filename):
+    previous_params = np.loadtxt(cmaes_filename)
+    # Check what likelihood that was
+    transformed_best_params = util.transformer(transform, previous_params, rate_dict, True)
+    previous_best = log_likelihood(transformed_best_params)
+    print('Previous best log likelihood was: ', previous_best)
+    if obtained_log_likelihood > previous_best:
+        print('Overwriting previous results')
+        write_out_results = True
+else:
+    write_out_results = True
+
+if write_out_results:
+    with open(cmaes_filename, 'w') as f:
+        for x in obtained_parameters:
+            f.write(pints.strfloat(x) + '\n')
 
 print ('CMAES fitting is done for model', args.model)
 #
