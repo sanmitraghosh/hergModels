@@ -177,7 +177,7 @@ for model_num in range(1,31):
                                 lw=0.5, label='predicted', alpha=0.1)
                         plt.legend(loc='upper right')
                         plt.xlim(4000, 4500)
-                        plt.ylim(0, 5)
+                        plt.ylim(0, 6) # nA
                         plt.savefig(fig_filename)
                         plt.close()
 
