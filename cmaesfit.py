@@ -215,7 +215,7 @@ cmaes_filename = os.path.join(
 write_out_results = False
 
 # Check to see if we have done a minimisation before
-if os.file.exists(cmaes_filename):
+if os.path.isfile(cmaes_filename):
     previous_params = np.loadtxt(cmaes_filename)
     # Check what likelihood that was
     transformed_best_params = util.transformer(transform, previous_params, rate_dict, True)
