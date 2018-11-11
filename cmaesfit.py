@@ -108,7 +108,7 @@ time, voltage, current = forwardModel.capacitance(
 #
 transform = args.transform
 model = forwardModel.ForwardModel(
-    protocol, temperature, myo_model, rate_dict, transform, sine_wave=True)
+    protocol, temperature, myo_model, rate_dict, transform, sine_wave=1)
 n_params = model.n_params
 
 #

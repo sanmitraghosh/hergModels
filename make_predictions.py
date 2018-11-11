@@ -49,27 +49,28 @@ for model_num in range(1,31):
 
     cell = args.cell
 
-    protocols = ['sine-wave','ap'] # Keep sine wave first to get good sigma estimate, and load params properly
+    protocols = ['sine-wave','ap','original-sine'] # Keep sine wave first to get good sigma estimate, and load params properly
     indices = range(len(protocols))
     for protocol_index in indices:
         protocol_name = protocols[protocol_index]
         print('Looking at Model ', model_num, ' and protocol ', protocol_name, protocol_index)
 
-        #
-        # Select data file
-        #
-        root = os.path.abspath(protocol_name + '-data')
-        print(root)
-        data_file = os.path.join(root, 'cell-' + str(cell) + '.csv')
+        if protocol_name is not 'original-sine':
+                #
+                # Select data file
+                #
+                root = os.path.abspath(protocol_name + '-data')
+                print(root)
+                data_file = os.path.join(root, 'cell-' + str(cell) + '.csv')
 
-        #
-        # Load data
-        #
-        log = myokit.DataLog.load_csv(data_file).npview()
-        time = log.time()
-        current = log['current']
-        voltage = log['voltage']
-        del(log)
+                #
+                # Load data
+                #
+                log = myokit.DataLog.load_csv(data_file).npview()
+                time = log.time()
+                current = log['current']
+                voltage = log['voltage']
+                del(log)
 
         #
         # Load protocol
@@ -77,9 +78,14 @@ for model_num in range(1,31):
         if protocol_name=='sine-wave':
                 protocol_file = os.path.join(root, 'steps.mmt')
                 protocol = myokit.load_protocol(protocol_file)
-                sw=True
+                sw=1
+        elif protocol_name=='original-sine':
+                root = os.path.abspath('sine-wave-data')
+                protocol_file = os.path.join(root, 'steps.mmt')
+                protocol = myokit.load_protocol(protocol_file) # Same steps before sine wave
+                sw=2
         else:
-                sw=False
+                sw=0
                 protocol_file = os.path.join(root, protocol_name + '.csv')
                 log = myokit.DataLog.load_csv(protocol_file).npview()
                 prot_times = log.time()
@@ -110,24 +116,26 @@ for model_num in range(1,31):
         #
         # Create forward model
         #
-        transform = 0  # we don't need to bother with transforms for a forward run...
+        transform = 0  # we don't need to bother with transforms for a forward run...        
+        
         model = forwardModel.ForwardModel(
                 protocol, temperature, myo_model, rate_dict,  transform, sine_wave=sw)
         n_params = model.n_params
 
-        #
-        # Define problem
-        #
-        problem = pints.SingleOutputProblem(model, time, current)
+        if protocol_name is not 'original-sine':
+                #
+                # Define problem
+                #
+                problem = pints.SingleOutputProblem(model, time, current)
 
-        #
-        # Define log-posterior
-        #
-        log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-        log_prior = prior.LogPrior(
-                rate_dict, lower_conductance, n_params, transform)
-        log_posterior = pints.LogPosterior(log_likelihood, log_prior)
-        rate_checker = Rates.ratesPrior(transform, lower_conductance)
+                #
+                # Define log-posterior
+                #
+                log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
+                log_prior = prior.LogPrior(
+                        rate_dict, lower_conductance, n_params, transform)
+                log_posterior = pints.LogPosterior(log_likelihood, log_prior)
+                rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
         # Define parameter set from best ones we have found so far.
         # Only refresh thse on the first sine wave fit protocol
@@ -151,8 +159,9 @@ for model_num in range(1,31):
                                 parameter_set = mcmc_parameter_set
                                 print('Replacing best fit parameters with MCMC max posterior sample')
 
-        likelihood_results[model_num-1,0]=model_num
-        likelihood_results[model_num-1,protocol_index+1]=log_likelihood(parameter_set)
+        if not protocol_name=='original-sine':
+                likelihood_results[model_num-1,0]=model_num
+                likelihood_results[model_num-1,protocol_index+1]=log_likelihood(parameter_set)
 
         if args.plot:
                 voltage_colour = 'black'
@@ -197,15 +206,17 @@ for model_num in range(1,31):
                         plt.savefig(fig_filename)
                         plt.close()
 
-                elif protocol_name=='sine-wave':
+                elif protocol_name in ['sine-wave','original-sine']:
                         plt.figure()
                         f, (a0, a1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
 
-                        a0.plot(time, voltage, color=voltage_colour,lw=0.5)
-                        a0.set_ylabel('Voltage (mV)')
-
-                        a1.plot(time, current, label='measured', color=measured_colour, lw=0.5)
+                        if protocol_name is not 'original-sine':
+                                a0.plot(time, voltage, color=voltage_colour,lw=0.5)
+                                a0.set_ylabel('Voltage (mV)')
+                                a1.plot(time, current, label='measured', color=measured_colour, lw=0.5)
                         a1.plot(time, sol, label='fitted', color=model_colour, lw=0.5)
+                        if protocol_name is 'original-sine':
+                                np.savetxt('figures/original-sine/model-' + str(model_num) + '-original-sine.csv', sol, delimiter=',')
                         a1.legend(loc='lower right')
                         a1.set_xlabel('Time (ms)')
                         a1.set_ylabel('Current (nA)')

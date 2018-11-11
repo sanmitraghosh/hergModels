@@ -29,7 +29,7 @@ class ForwardModel(pints.ForwardModel):
 
     """
 
-    def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=False):
+    def __init__(self, protocol, temperature, myo_model, rate_dict, transform_type, sine_wave=0):
 
         # Load model
         model = myokit.load_model(myo_model)
@@ -47,13 +47,20 @@ class ForwardModel(pints.ForwardModel):
         model.get('nernst.EK').set_rhs(erev(temperature))
 
         # Add sine-wave equation to model
-        if sine_wave:
+        if sine_wave==1:
             model.get('membrane.V').set_rhs(
                 'if(engine.time >= 3000.1 and engine.time < 6500.1,'
                 + ' - 30'
                 + ' + 54 * sin(0.007 * (engine.time - 2500.1))'
                 + ' + 26 * sin(0.037 * (engine.time - 2500.1))'
                 + ' + 10 * sin(0.190 * (engine.time - 2500.1))'
+                + ', engine.pace)')
+        elif sine_wave==2:
+            model.get('membrane.V').set_rhs(
+                'if(engine.time >= 3000.1 and engine.time < 6500.1,'
+                + ' + 57 * sin(0.195* (engine.time - 2500.1))'
+                + ' + 28 * sin(0.503 * (engine.time - 2500.1))'
+                + ' + 18 * sin(0.7037 * (engine.time - 2500.1))'
                 + ', engine.pace)')
 
         # Create simulation
