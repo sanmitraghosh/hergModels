@@ -236,12 +236,7 @@ print ('CMAES fitting is done for model', args.model)
 #
 # Show result
 #
-#
-# re-create forward model
-#
-
-plot = args.plot
-if plot:
+if args.plot and write_out_results:
     root = os.path.abspath('figures/cmaesfit')
     fig_filename = os.path.join(
         root, model_name + '-cell-' + str(cell) + '-cmaes.eps')
