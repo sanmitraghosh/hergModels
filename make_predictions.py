@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 
 # Load a hERG model and prior
 cmaes_result_files = 'cmaes_results/'
+mcmc_result_files = 'mcmc_results/'
 
 # Check input arguments
 
@@ -48,7 +49,7 @@ for model_num in range(1,31):
 
     cell = args.cell
 
-    protocols = ['sine-wave','ap'] # Keep sine wave first to get good sigma estimate.
+    protocols = ['sine-wave','ap'] # Keep sine wave first to get good sigma estimate, and load params properly
     indices = range(len(protocols))
     for protocol_index in indices:
         protocol_name = protocols[protocol_index]
@@ -128,15 +129,30 @@ for model_num in range(1,31):
         log_posterior = pints.LogPosterior(log_likelihood, log_prior)
         rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
-        # Define starting point for mcmc routine
-        parameter_set = np.loadtxt(cmaes_result_files + model_name +
+        # Define parameter set from best ones we have found so far.
+        # Only refresh thse on the first sine wave fit protocol
+        if protocol_name=='sine-wave':
+                parameter_set = np.loadtxt(cmaes_result_files + model_name +
                                 '-cell-' + str(cell) + '-cmaes.txt')
-        print('Model parameters start point: ', parameter_set)
+                ll_score = log_likelihood(parameter_set)
+                print('CMAES model parameters start point: ', parameter_set)
+                print('LogLikelihood (proportional to square error): ', ll_score)
 
-        ll_score = log_likelihood(parameter_set)
-        print('LogLikelihood (proportional to square error): ', ll_score)
+                mcmc_best_param_file = mcmc_result_files + model_name +'-cell-' + str(cell) + '-best-parameters.txt'
+                #print('Looking for: ', mcmc_best_param_file)
+                if os.path.isfile(mcmc_best_param_file):
+                        mcmc_parameter_set = np.loadtxt(mcmc_best_param_file)
+                        mcmc_parameter_set = util.transformer(1,mcmc_parameter_set,rate_dict,False)# Transform hard coded to 1
+                        mcmc_ll_score = log_likelihood(mcmc_parameter_set)
+                        print('MCMC model parameters start point: ', mcmc_parameter_set)
+                        print('LogLikelihood (proportional to square error): ', mcmc_ll_score)
+                        if (mcmc_ll_score>ll_score):
+                                ll_score = mcmc_ll_score
+                                parameter_set = mcmc_parameter_set
+                                print('Replacing best fit parameters with MCMC max posterior sample')
+
         likelihood_results[model_num-1,0]=model_num
-        likelihood_results[model_num-1,protocol_index+1]=ll_score
+        likelihood_results[model_num-1,protocol_index+1]=log_likelihood(parameter_set)
 
         if args.plot:
                 voltage_colour = 'black'
@@ -148,7 +164,7 @@ for model_num in range(1,31):
                         os.makedirs(root)
                 fig_filename = os.path.join(root, model_name + '-cell-' + str(cell) + '-' + protocol_name + '-prediction.eps')
 
-                ap_sol = model.simulate(parameter_set, time)
+                sol = model.simulate(parameter_set, time)
 
                 if protocol_name=='ap':
                         plt.figure(figsize=(9, 7))
@@ -160,20 +176,20 @@ for model_num in range(1,31):
                         plt.subplot(4, 1, 2)
                         plt.plot(time, current, '-', color=measured_colour,
                                 lw=0.5, label='measured')
-                        plt.plot(time, ap_sol, color=model_colour,
+                        plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
                         plt.xlim(0, 8000)
                         plt.subplot(4, 1, 3)
                         plt.plot(time, current, '-', color=measured_colour,
                                 lw=0.5, label='measured')
-                        plt.plot(time, ap_sol, color=model_colour,
+                        plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
                         plt.xlim(0, 8000)
                         plt.ylim(-0.5, 2)
                         plt.subplot(4, 1, 4)
                         plt.plot(time, current, '-', color=measured_colour,
                                 lw=0.5, label='measured')
-                        plt.plot(time, ap_sol, color=model_colour,
+                        plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
                         plt.legend(loc='upper right')
                         plt.xlim(4000, 4500)
@@ -189,7 +205,7 @@ for model_num in range(1,31):
                         a0.set_ylabel('Voltage (mV)')
 
                         a1.plot(time, current, label='measured', color=measured_colour, lw=0.5)
-                        a1.plot(time, model.simulate(parameter_set, time), label='fitted', color=model_colour, lw=0.5)
+                        a1.plot(time, sol, label='fitted', color=model_colour, lw=0.5)
                         a1.legend(loc='lower right')
                         a1.set_xlabel('Time (ms)')
                         a1.set_ylabel('Current (nA)')
