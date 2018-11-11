@@ -84,6 +84,10 @@ def aic_bic(samples, current):
 
     return 2*npar - 2*max_log_likelihood, np.log(len(current))*npar - 2*max_log_likelihood
 
+def aic_bic_opt(max_log_likelihood, current):
+
+    return 2*npar - 2*max_log_likelihood, np.log(len(current))*npar - 2*max_log_likelihood
+
 def rmse(model, samples, current, time):
 
     new_values = []
@@ -123,7 +127,7 @@ parser.add_argument('--cell', type=int, default=5, metavar='N', \
       help='cell number : 1, 2, ..., 5' )
 parser.add_argument('--points', type=int, default=5000, metavar='N', \
       help='number of samples to compute WAIC')
-parser.add_argument('--mcmc', type=bool, default=True, metavar='N',
+parser.add_argument('--mcmc', type=bool, default=False, metavar='N',
                     help='get model stats for mcmc or optimisation')
 args = parser.parse_args()
 #sys.path.append(os.path.abspath('models_forward'))
@@ -156,18 +160,21 @@ del(log_ap)
 protocol_ap = [time_ap, voltage_ap]
 
 model_ppc_tarces = []
-ikr_names = ['Beattie', 'C-O-I','C-C-O-I','C-C-C-O-I']
-model_metrics = np.zeros((5,7))
+#ikr_names = ['Beattie', 'C-O-I','C-C-O-I','C-C-C-O-I']
+if args.mcmc:
+    model_metrics = np.zeros((30,7))
+else:
+    model_metrics = np.zeros((30,8))
 for i in xrange(30):
-    model_name = 'model-'+str(i)
+    model_name = 'model-'+str(i+1)
     root = os.path.abspath('models_myokit')
     myo_model = os.path.join(root, model_name + '.mmt')
     root = os.path.abspath('rate_dictionaries')
     rate_file = os.path.join(root, model_name + '-priors.p')
     rate_dict = cPickle.load(open(rate_file, 'rb'))
     sys.path.append(os.path.abspath('models_forward'))
-    print("loading  model: "+str(i))
-    model_name = 'model-'+str(i)
+    print("loading  model: "+str(i+1))
+    model_name = 'model-'+str(i+1)
     temperature = forwardModel.temperature(cell)
     lower_conductance = forwardModel.conductance_limit(cell)
     print('Applying capacitance filtering')
@@ -193,12 +200,16 @@ for i in xrange(30):
     # Define log-posterior
     #
     log_likelihood = pints.KnownNoiseLogLikelihood(problem_sine, sigma_noise_sine)
+    log_likelihood_ap = pints.KnownNoiseLogLikelihood(problem_ap, sigma_noise_ap)
     log_prior = prior.LogPrior(
         rate_dict, lower_conductance, npar, transform)
     log_posterior = pints.LogPosterior(log_likelihood, log_prior)
+    log_posterior_ap = pints.LogPosterior(log_likelihood_ap, log_prior)
     rate_checker = Rates.ratesPrior(transform, lower_conductance)
-    if args.mcmc:
 
+    
+    if args.mcmc:
+        model_metrics = np.zeros((5,7))
         root = os.path.abspath('mcmc_results')
         param_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_traces.p')
         trace = cPickle.load(open(param_filename, 'rb'))
@@ -223,12 +234,19 @@ for i in xrange(30):
         #print(bic_ppc)
         model_metrics[i,:] = [ waic_train, aic_ppc, bic_ppc, log_Z, rmse_sine, waic_test, rmse_ap]
     else:
+        
+        print(model_name+': stats written')
         parameters = forwardModel.fetch_parameters(model_name, cell)
+        max_log_likelihood_train = log_likelihood(parameters)
+        max_log_likelihood_ap = log_likelihood(parameters)
         rmse_opt_train = rmse_opt(model, parameters, current_sine, time_sine)
+        aic_opt_train, bic_opt_train =aic_bic_opt(max_log_likelihood_train, parameters)
         rmse_opt_ap = rmse_opt(model_ap, parameters, current_ap, time_ap)
-        model_metrics[i,:] = [ rmse_opt_train, rmse_opt_ap]
+        aic_opt_ap, bic_opt_ap =aic_bic_opt(max_log_likelihood_ap, parameters)
+        model_metrics[i,:] = [ max_log_likelihood_train, aic_opt_train, bic_opt_train, rmse_opt_train, 
+                               max_log_likelihood_ap, aic_opt_ap, bic_opt_ap, rmse_opt_ap]
     
 
 outfile = './figures/model_metrics.txt'
-np.savetxt(outfile, model_metrics)
+np.savetxt(outfile, model_metrics,  fmt='%4.4e', delimiter=',')
     
