@@ -238,7 +238,7 @@ for i in xrange(30):
         print(model_name+': stats written')
         parameters = forwardModel.fetch_parameters(model_name, cell)
         max_log_likelihood_train = log_likelihood(parameters)
-        max_log_likelihood_ap = log_likelihood(parameters)
+        max_log_likelihood_ap = log_likelihood_ap(parameters)
         rmse_opt_train = rmse_opt(model, parameters, current_sine, time_sine)
         aic_opt_train, bic_opt_train =aic_bic_opt(max_log_likelihood_train, parameters)
         rmse_opt_ap = rmse_opt(model_ap, parameters, current_ap, time_ap)
