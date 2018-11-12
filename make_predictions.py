@@ -187,12 +187,14 @@ for model_num in range(1,31):
                                 lw=0.5, label='measured')
                         plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
+                        plt.ylabel('Current (nA)')
                         plt.xlim(0, 8000)
                         plt.subplot(4, 1, 3)
                         plt.plot(time, current, '-', color=measured_colour,
                                 lw=0.5, label='measured')
                         plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
+                        plt.ylabel('Current (nA)')
                         plt.xlim(0, 8000)
                         plt.ylim(-0.5, 2)
                         plt.subplot(4, 1, 4)
@@ -200,6 +202,8 @@ for model_num in range(1,31):
                                 lw=0.5, label='measured')
                         plt.plot(time, sol, color=model_colour,
                                 lw=0.5, label='predicted', alpha=0.1)
+                        plt.ylabel('Current (nA)')
+                        plt.xlabel('Time (ms)')
                         plt.legend(loc='upper right')
                         plt.xlim(4000, 4500)
                         plt.ylim(0, 6) # nA
