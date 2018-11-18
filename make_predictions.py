@@ -374,6 +374,7 @@ if args.plot:
                 fig = plt.figure(protocol_index+1+len(indices))
                 model_likelihood_axes = fig.get_axes()
                 sorted_scores = np.sort(likelihood_results[:,protocol_index+1])
+                sorted_scores = [i for i in sorted_scores if i is not np.nan]
                 #print('Sorted first = ', sorted_scores[0], ' last = ', sorted_scores[-1])
                 for model_num in range(1,num_models+1):
                         ll_score = likelihood_results[model_num-1,protocol_index+1]
