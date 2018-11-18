@@ -4,6 +4,7 @@
 #
 from __future__ import division, print_function
 import models_forward.LogPrior as prior
+import models_forward.tiLogLikelihood as LogLikelihood
 import models_forward.pintsForwardModel as forwardModel
 import models_forward.Rates as Rates
 import models_forward.util as util
@@ -109,7 +110,7 @@ time, voltage, current = forwardModel.capacitance(
 #
 # Create forward model
 #
-transform = args.transform
+transform = 0#args.transform
 model = forwardModel.ForwardModel(
     protocol, temperature, myo_model, rate_dict,  transform, sine_wave=1)
 n_params = model.n_params
@@ -122,36 +123,41 @@ problem = pints.SingleOutputProblem(model, time, current)
 #
 # Define log-posterior
 #
-log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = prior.LogPrior(
+log_likelihood = LogLikelihood.tiLogLikelihood(problem, sigma_noise, voltage)
+log_prior_rates = prior.LogPrior(
     rate_dict, lower_conductance, n_params, transform)
+log_prior_discrp = pints.NormalLogPrior(0.,1.5)
+log_prior = pints.ComposedLogPrior(log_prior_rates,log_prior_discrp)
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
 #
 # Run
 #
-nchains = 5
+nchains = 1
 
 # Define starting point for mcmc routine
 xs = []
 
 x0 = np.loadtxt(cmaes_result_files + model_name +
                 '-cell-' + str(cell) + '-cmaes.txt')
+ds = log_prior_discrp.sample().reshape((1,))
+x0 = [np.concatenate((x0,ds))]
 print('Model parameters start point: ', x0)
+"""
 x0 = util.transformer(transform, x0, rate_dict, True)
 for i in xrange(nchains):
     xs.append(x0)
-
+"""
 print('MCMC starting point: ')
 for x0 in xs:
     print(x0)
 print('MCMC starting Log-Posterior: ')
 for x0 in xs:
     print(log_posterior(x0))
-
+print(log_posterior(x0))
 # Create sampler
-mcmc = mcmcsampling.MCMCSampling(log_posterior, nchains, xs,
+mcmc = mcmcsampling.MCMCSampling(log_posterior, nchains, x0,
                                  method=pints.AdaptiveCovarianceMCMC)
 
 # mcmc.set_log_to_file('log.txt')
