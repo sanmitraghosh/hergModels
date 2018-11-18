@@ -95,7 +95,7 @@ for model_num in range(1,num_models+1):
     rate_file = os.path.join(root, model_name + '-priors.p')
     rate_dict = cPickle.load(open(rate_file, 'rb'))
 
-    print("loading  model: "+str(model_num))
+    print("LOADING MODEL "+str(model_num))
     model_name = 'model-'+str(model_num)
 
     cell = args.cell
@@ -214,11 +214,6 @@ for model_num in range(1,num_models+1):
         likelihood_results[model_num-1,0]=model_num
         likelihood_results[model_num-1,protocol_index+1]=ll_score
 
-        if (ll_score is not np.nan) and (ll_score > best_likelihood_each_protocol[protocol_index]):
-                best_likelihood_each_protocol[protocol_index] = ll_score
-        if (ll_score is not np.nan) and (ll_score < worst_likelihood_each_protocol[protocol_index]):
-                worst_likelihood_each_protocol[protocol_index] = ll_score
-
         if args.plot:
                 voltage_colour = 'black'
                 measured_colour = 'red'
@@ -229,7 +224,7 @@ for model_num in range(1,num_models+1):
                         os.makedirs(root)
                 fig_filename = os.path.join(root, model_name + '-cell-' + str(cell) + '-' + protocol_name + '-prediction.eps')
 
-                print('Running sim with set ', parameter_set)
+                #print('Running sim with set ', parameter_set)
                 sol = model.simulate(parameter_set, time)
 
                 big_fig = plt.figure(protocol_index+1)
@@ -345,6 +340,7 @@ if args.plot:
                 #show only the outside spines
                 for ax in all_axes:
                         ax.tick_params(labelbottom=False)
+                        ax.tick_params(labelleft=False)
                         # for sp in ax.spines.values():
                         #         sp.set_visible(False)
                         # if ax.is_first_row():
@@ -366,18 +362,23 @@ if args.plot:
                 ticks = [-1,0,1]
                 cb1.set_ticks(ticks)
                 cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
-
                 cb1.set_label('Error')    
+
+                # Add a label saying which model is which
+                for i in range(1,num_models+1):
+                        all_axes[i+3].text(0,0.9,str(i),verticalalignment='top', horizontalalignment='left',fontsize=10)
 
                 plt.savefig('figures/' + protocols[protocol_index] + '_all_model_errors_cell_' + str(cell) + '.eps')   # save the figure to file
                 plt.close(fig)
 
                 fig = plt.figure(protocol_index+1+len(indices))
                 model_likelihood_axes = fig.get_axes()
+                sorted_scores = np.sort(likelihood_results[:,protocol_index+1])
+                #print('Sorted first = ', sorted_scores[0], ' last = ', sorted_scores[-1])
                 for model_num in range(1,num_models+1):
                         ll_score = likelihood_results[model_num-1,protocol_index+1]
                         cmap2 = plt.cm.get_cmap('viridis')
-                        scaled_score = (np.log10(-ll_score)-np.log10(-worst_likelihood_each_protocol[protocol_index]))/(np.log10(-best_likelihood_each_protocol[protocol_index])-np.log10(-worst_likelihood_each_protocol[protocol_index]))
+                        scaled_score = (np.log10(-ll_score)-np.log10(-sorted_scores[0]))/(np.log10(-sorted_scores[-1])-np.log10(-sorted_scores[0]))
                         print('Scaled score for model ', model_num, ' protocol ', protocols[protocol_index], ' is ', scaled_score)
                         model_likelihood_axes[model_num+3].axvspan(0,1, facecolor=cmap2(scaled_score), alpha=0.5)
                         model_likelihood_axes[model_num+3].plot([0, 1],[0, 0],'k-',lw=0.5)
