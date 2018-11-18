@@ -55,13 +55,13 @@ class ForwardModel(pints.ForwardModel):
                 + ' + 26 * sin(0.037 * (engine.time - 2500.1))'
                 + ' + 10 * sin(0.190 * (engine.time - 2500.1))'
                 + ', engine.pace)')
-        elif sine_wave==2:
-            model.get('membrane.V').set_rhs(
-                'if(engine.time >= 3000.1 and engine.time < 6500.1,'
-                + ' + 57 * sin(0.195* (engine.time - 2500.1))'
-                + ' + 28 * sin(0.503 * (engine.time - 2500.1))'
-                + ' + 18 * sin(0.7037 * (engine.time - 2500.1))'
-                + ', engine.pace)')
+        #elif sine_wave==2:
+        #    model.get('membrane.V').set_rhs(
+        #        'if(engine.time >= 3000.1 and engine.time < 8000.1,'
+        #        + ' + 57 * sin(0.195* (engine.time - 2500.1))'
+        #        + ' + 28 * sin(0.503 * (engine.time - 2500.1))'
+        #        + ' + 18 * sin(0.7037 * (engine.time - 2500.1))'
+        #        + ', engine.pace)')
 
         # Create simulation
         self.simulation = myokit.Simulation(model)
@@ -108,14 +108,14 @@ class ForwardModel(pints.ForwardModel):
          # Run
         self.simulation.reset()
         try:
-
             d = self.simulation.run(
                 np.max(times + 0.5 * times[1]),
                 log_times=times,
                 log=['engine.time', 'ikr.IKr', 'membrane.V']
                 #log = ['engine.time', 'ikr.IKr', 'membrane.V', 'ikr.m_inf', 'ikr.h_inf'],
             ).npview()
-        except myokit.SimulationError:
+        except myokit.SimulationError as e:
+            print('Myokit error: ',e)
             return times * float('inf')
 
         # Store membrane potential for debugging
