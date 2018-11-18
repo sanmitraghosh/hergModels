@@ -64,7 +64,6 @@ if args.plot:
                         if i==1 or i==3 or i==5 or i==8 or i==10:
                                 ax = plt.subplot(inner_grid[:,0])
                                 big_fig.add_subplot(ax)
-                        
                         if i==5 or i==8 or i==10:
                                 ax = plt.subplot(inner_grid[0,1])
                                 big_fig.add_subplot(ax)
@@ -73,12 +72,9 @@ if args.plot:
                         elif i==3:
                                 ax = plt.subplot(inner_grid[:,1])
                                 big_fig.add_subplot(ax)
-
                         if i>=2: 
                                 ax = plt.subplot(inner_grid[:,2])
                                 big_fig.add_subplot(ax)
-
-
                         if i==6:
                                 ax = plt.subplot(inner_grid[0,3])
                                 big_fig.add_subplot(ax)
@@ -247,20 +243,24 @@ for model_num in range(1,num_models+1):
                                 model_axes[i].plot(time, voltage, color=voltage_colour, label='Voltage', lw=0.5)
                                 model_likelihood_axes[i].plot(time, voltage, color=voltage_colour, label='Voltage', lw=0.5)
                 
+                N = 100 # Number of time points in each windows
                 error_measure = (current-sol)*np.sign(current)
-                #error_measure = uniform_filter1d(error_measure, size=1000)
-                max_err = max(error_measure)
-                min_err = min(error_measure)
-                biggest_err = max([max_err, abs(min_err)])
-                #print('Biggest error is: ', biggest_err)
-                error_measure /= (0.5*biggest_err) # Scale to be in [-2,2] for colormaps to show strong results
+                num_windows = int(len(error_measure)/N)
+                windowed_error = np.zeros(num_windows)
+                for i in range(0, num_windows):
+                        windowed_error[i] = np.mean(error_measure[N*i:N*i+N-1]) # in nA
+                #max_err = max(windowed_error)
+                #min_err = min(windowed_error)
+                #biggest_err = max([max_err, abs(min_err)])
+                #windowed_error /= biggest_err # Scale to be in [-1,1] for colormaps to show strong results
+                # (it should be [-0.5,0.5] to give a min of zero and max of one, but this shows peaks but not most of trace...)
                 #print('Error measure rescaled to be in [',min(error_measure),',',max(error_measure),'].')
 
                 cmap = plt.cm.get_cmap('RdBu')
-                N = 100 # Number of time points we do windows for
-                for i in range(0, int(len(error_measure)/N)):
+                
+                for i in range(0, num_windows):
                         # There are 4 voltage axes then each models' axis in turn, so start at axes[4] for model 1.
-                        model_axes[model_num+3].axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+np.mean(error_measure[N*i:N*i+N-1])), alpha=0.5)
+                        model_axes[model_num+3].axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
                 model_axes[model_num+3].plot([time[0], time[-1]],[0, 0],'k-',lw=0.5)
                 model_axes[model_num+3].set_ylim(0, 1)
                 
@@ -279,8 +279,8 @@ for model_num in range(1,num_models+1):
                                 lw=0.5, label='predicted', alpha=0.1)
                         plt.ylabel('Current (nA)')
                         plt.xlim(0, 8000)
-                        for i in range(0, int(len(error_measure)/N)):
-                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+np.mean(error_measure[N*i:N*i+N-1])), alpha=0.5)
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                         plt.subplot(4, 1, 3)
                         plt.plot(time, current, '-', color=measured_colour,
@@ -290,8 +290,8 @@ for model_num in range(1,num_models+1):
                         plt.ylabel('Current (nA)')
                         plt.xlim(500, 8000)
                         plt.ylim(-0.5, 1.5)
-                        for i in range(0, int(len(error_measure)/N)):
-                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+np.mean(error_measure[N*i:N*i+N-1])), alpha=0.5)
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                         plt.subplot(4, 1, 4)
                         plt.plot(time, current, '-', color=measured_colour,
@@ -302,8 +302,8 @@ for model_num in range(1,num_models+1):
                         plt.xlabel('Time (ms)')
                         plt.legend(loc='upper right')
                         plt.xlim(4000, 4500)
-                        for i in range(0, int(len(error_measure)/N)):
-                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+np.mean(error_measure[N*i:N*i+N-1])), alpha=0.5)
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                         plt.ylim(0, 6) # nA
                         plt.savefig(fig_filename)
@@ -325,6 +325,8 @@ for model_num in range(1,num_models+1):
                         else:
                                 label_text = 'predicted'
                         a1.plot(time, sol, label=label_text, color=model_colour, lw=0.5)
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
                         if protocol_name is 'original-sine':
                                 np.savetxt('figures/original-sine/model-' + str(model_num) + '-original-sine.csv', np.transpose([time, sol]), delimiter=',')
                         a1.legend(loc='lower right')
@@ -363,9 +365,9 @@ if args.plot:
 
                 ticks = [-1,0,1]
                 cb1.set_ticks(ticks)
-                cb1.set_ticklabels(['Too low','No error','Too high'])
+                cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
 
-                cb1.set_label('Error size (normalised for each model)')    
+                cb1.set_label('Error')    
 
                 plt.savefig('figures/' + protocols[protocol_index] + '_all_model_errors_cell_' + str(cell) + '.eps')   # save the figure to file
                 plt.close(fig)
