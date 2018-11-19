@@ -16,6 +16,7 @@ import argparse
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.patheffects as PathEffects
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -269,7 +270,6 @@ for protocol_index in indices:
         # Add a label saying which model is which to both big plots
         for i in range(1,num_models+1):
                 all_axes[i+3].text(0,0.9,str(i),verticalalignment='top', horizontalalignment='left',fontsize=10)
-                model_likelihood_axes[i+3].text(0,0.9,str(i),verticalalignment='top', horizontalalignment='left',fontsize=10)
 
         plt.savefig('figures/predictions/' + protocols[protocol_index] + '_all_model_errors_cell_' + str(cell) + '.eps')   # save the figure to file
         plt.close(fig)
@@ -287,6 +287,9 @@ for protocol_index in indices:
                 model_likelihood_axes[model_num+3].axvspan(0,1, facecolor=cmap2(scaled_score), alpha=0.5)
                 model_likelihood_axes[model_num+3].plot([0, 1],[0, 0],'k-',lw=0.5)
                 model_likelihood_axes[model_num+3].set_ylim(0, 1)
+                txt = model_likelihood_axes[model_num+3].text(0.1,0.9,str(model_num),verticalalignment='top', horizontalalignment='left',fontsize=10)
+                txt.set_path_effects([PathEffects.withStroke(linewidth=2, foreground='w')])
+                plt.draw()
         
         for ax in model_likelihood_axes:
                 ax.tick_params(labelbottom=False)
