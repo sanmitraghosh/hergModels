@@ -31,6 +31,10 @@ protocols = ['sine-wave','ap','original-sine'] # Keep sine wave first to get goo
 indices = range(len(protocols))
 num_models = 30
 
+err_map = 'PRGn'
+cmap = plt.cm.get_cmap(err_map)
+cmap1_reversed = plt.cm.get_cmap(err_map + '_r')
+
 cell = args.cell
 
 likelihood_results = np.loadtxt('predictions/likelihoods-cell-' + str(cell) + '.csv', delimiter=',')
@@ -133,7 +137,7 @@ for model_num in range(1,num_models+1):
         # (it should be [-0.5,0.5] to give a min of zero and max of one, but this shows peaks but not most of trace...)
         #print('Error measure rescaled to be in [',min(error_measure),',',max(error_measure),'].')
 
-        cmap = plt.cm.get_cmap('RdBu')
+        
         
         for i in range(0, num_windows):
                 # There are 4 voltage axes then each models' axis in turn, so start at axes[4] for model 1.
@@ -183,8 +187,21 @@ for model_num in range(1,num_models+1):
                         plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                 plt.ylim(0, 6) # nA
+
+
+                # Squeeze in a colorbar axis
+                plt.subplots_adjust(bottom=0.065, left=0.08, right=0.85, top=0.98)
+                cax = plt.axes([0.88, 0.065, 0.02, 0.68])
+                norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+                cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
+                ticks = [-1,0,1]
+                cb1.set_ticks(ticks)
+                cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
+                cb1.set_label('Error', labelpad=-20)    
+
                 plt.savefig(fig_filename)
                 plt.close(fig)
+                del fig
 
         elif protocol_name in ['sine-wave','original-sine']:
                 fig = plt.figure()
@@ -205,8 +222,20 @@ for model_num in range(1,num_models+1):
                 a1.legend(loc='lower right')
                 a1.set_xlabel('Time (ms)')
                 a1.set_ylabel('Current (nA)')
+
+                # Squeeze in a colorbar axis
+                plt.subplots_adjust(bottom=0.1, left=0.12, right=0.85, top=0.95)
+                cax = plt.axes([0.86, 0.1, 0.02, 0.515])
+                norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+                cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
+                ticks = [-1,0,1]
+                cb1.set_ticks(ticks)
+                cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
+                cb1.set_label('Error', labelpad=-20)    
+
                 plt.savefig(fig_filename)   # save the figure to file
                 plt.close(fig)
+                del fig
 
 for protocol_index in indices:
         fig = plt.figure(protocol_index+1)
@@ -227,21 +256,20 @@ for protocol_index in indices:
                 # if ax.is_last_col():
                 #         ax.spines['right'].set_visible(True)
 
+        # Squeeze in a colorbar axis
         plt.subplots_adjust(bottom=0.075, left=0.05, right=0.90, top=0.925)
         cax = plt.axes([0.92, 0.075, 0.02, 0.775])
-    
         norm = mpl.colors.Normalize(vmin=-1, vmax=1)
-        cmap1_reversed = plt.cm.get_cmap('RdBu_r')
         cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
-
         ticks = [-1,0,1]
         cb1.set_ticks(ticks)
         cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
         cb1.set_label('Error')    
 
-        # Add a label saying which model is which
+        # Add a label saying which model is which to both big plots
         for i in range(1,num_models+1):
                 all_axes[i+3].text(0,0.9,str(i),verticalalignment='top', horizontalalignment='left',fontsize=10)
+                model_likelihood_axes[i+3].text(0,0.9,str(i),verticalalignment='top', horizontalalignment='left',fontsize=10)
 
         plt.savefig('figures/predictions/' + protocols[protocol_index] + '_all_model_errors_cell_' + str(cell) + '.eps')   # save the figure to file
         plt.close(fig)
@@ -254,7 +282,7 @@ for protocol_index in indices:
         for model_num in range(1,num_models+1):
                 ll_score = likelihood_results[model_num-1,protocol_index+1]
                 cmap2 = plt.cm.get_cmap('viridis')
-                scaled_score = (np.log10(-ll_score)-np.log10(-sorted_scores[0]))/(np.log10(-sorted_scores[-1])-np.log10(-sorted_scores[0]))
+                scaled_score = (np.log10(-ll_score)-np.log10(-sorted_scores[1]))/(np.log10(-sorted_scores[-1])-np.log10(-sorted_scores[1]))
                 print('Scaled score for model ', model_num, ' protocol ', protocols[protocol_index], ' is ', scaled_score)
                 model_likelihood_axes[model_num+3].axvspan(0,1, facecolor=cmap2(scaled_score), alpha=0.5)
                 model_likelihood_axes[model_num+3].plot([0, 1],[0, 0],'k-',lw=0.5)
@@ -262,6 +290,7 @@ for protocol_index in indices:
         
         for ax in model_likelihood_axes:
                 ax.tick_params(labelbottom=False)
+                ax.tick_params(labelleft=False)
 
         # create an axes on the right side of the gridspec
         plt.subplots_adjust(bottom=0.075, left=0.05, right=0.90, top=0.925)
