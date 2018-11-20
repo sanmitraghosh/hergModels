@@ -3,7 +3,7 @@ name: model-1
 author: Sanmitra Ghosh
 desc: Check associated model deifintion document
 # Initial values
-ikr.y1 = 0
+ikr.O = 0
 
 
 #
@@ -29,10 +29,10 @@ EK = -85 [mV]
 #
 [ikr]
 use membrane.V
-IKr = p5 * y1 * (V - nernst.EK)
+IKr = p5 * O * (V - nernst.EK)
 k12 = p1 * exp( p2 * V)
 k21 = p3 * exp(-p4 * V)
-dot(y1) = k12 * (1-y1) - k21*y1
+dot(O) = k12 * (1-O) - k21*O
 
 p1 = 2.26e-4 [1/ms]
 p2 = 0.06990 [1/mV]

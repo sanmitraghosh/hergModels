@@ -265,7 +265,7 @@ for protocol_index in indices:
         ticks = [-1,0,1]
         cb1.set_ticks(ticks)
         cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
-        cb1.set_label('Error')    
+        cb1.set_label('Error',labelpad=-20)    
 
         # Add a label saying which model is which to both big plots
         for i in range(1,num_models+1):
@@ -302,7 +302,7 @@ for protocol_index in indices:
         cb2 = mpl.colorbar.ColorbarBase(cax2, cmap=cmap2, orientation='vertical')
         cb2.set_ticks([0,1])
         cb2.set_ticklabels(['Worst','Best'])
-        cb2.set_label('Goodness of fit')
+        cb2.set_label('Goodness of fit', labelpad=-10)
 
         plt.savefig('figures/predictions/' + protocols[protocol_index] + '_all_model_likelihoods_cell_' + str(cell) + '.eps')   # save the figure to file
         plt.close(fig)

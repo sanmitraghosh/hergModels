@@ -111,7 +111,7 @@ class ForwardModel(pints.ForwardModel):
             d = self.simulation.run(
                 np.max(times + 0.5 * times[1]),
                 log_times=times,
-                log=['engine.time', 'ikr.IKr', 'membrane.V']
+                log=['engine.time', 'ikr.IKr', 'membrane.V','ikr.O']
                 #log = ['engine.time', 'ikr.IKr', 'membrane.V', 'ikr.m_inf', 'ikr.h_inf'],
             ).npview()
         except myokit.SimulationError as e:
@@ -120,6 +120,7 @@ class ForwardModel(pints.ForwardModel):
 
         # Store membrane potential for debugging
         self.simulated_v = d['membrane.V']
+        self.simulated_o = d['ikr.O']
         #self.simulated_minf = d['ikr.m_inf']
         #self.simulated_hinf = d['ikr.h_inf']
 

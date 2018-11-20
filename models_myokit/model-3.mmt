@@ -24,10 +24,9 @@ V = engine.pace
 [nernst]
 EK = -85 [mV]
 
-
 [ikr]
 use membrane.V
-IKr = p9 * m * h * (V - nernst.EK)
+IKr = p9 * O * (V - nernst.EK)
 
 am = p1 * exp(p2*V)
 bm = p3 * exp(-p4*V)
@@ -38,6 +37,8 @@ m_inf = am/(am + bm)
 taum = 1/(am + bm)
 h_inf = ah/(ah + bh)
 tauh = 1/(ah + bh)
+
+O = m*h
 
 dot(m) = (m_inf - m)/taum
 dot(h) = (h_inf - h)/tauh

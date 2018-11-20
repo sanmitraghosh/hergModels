@@ -29,9 +29,9 @@ EK = -85 [mV]
 #
 [ikr]
 use membrane.V
-IKr = p13 * Om * h * (V - nernst.EK)
+IKr = p13 * O * (V - nernst.EK)
 C2 = 1 -(Om+C1)
-
+O = Om*h
 a1 = p1 * exp(p2*V)
 b1 = p3 * exp(-p4*V)
 bh = p5 * exp(p6*V)
@@ -45,8 +45,6 @@ tauh = 1/(ah + bh)
 dot(C1) = b2*Om + a1*C2 - C1*(a2 +b1)
 dot(Om) = a2*C1 - b2*Om
 dot(h) = (h_inf - h)/tauh
-
-
 
 p1 = 2.26e-4 [1/ms]
 p2 = 0.06990 [1/mV]

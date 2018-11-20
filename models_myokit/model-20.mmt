@@ -30,7 +30,10 @@ EK = -85 [mV]
 #
 [ikr]
 use membrane.V
-IKr = p17 * Om * h * (V - nernst.EK)
+IKr = p17 * O * (V - nernst.EK)
+O = Om*h
+
+
 C3 = 1 - (Om + C1 + C2)
 a1 = p1 * exp(p2*V)
 b1 = p3 * exp(-p4*V)

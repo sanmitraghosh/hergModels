@@ -174,6 +174,7 @@ for model_num in range(1,num_models+1):
         #print('Running sim with set ', parameter_set)
         sol = model.simulate(parameter_set, time)
         np.savetxt(root + '/model-' + str(model_num) + '.csv', np.transpose([time, sol]), delimiter=',')
+        np.savetxt(root + '/for-teun-model-' + str(model_num) + '.csv', np.transpose([time, model.simulated_v, sol, model.simulated_o]), delimiter=',')
 
 np.savetxt('predictions/likelihoods-cell-' + str(cell) + '.csv', likelihood_results, delimiter=',')
 
