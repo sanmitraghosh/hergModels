@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python2
 # coding: utf-8
 
 # # Marginal likelihood of linear regression
@@ -61,11 +61,11 @@ values = model.simulate(true_parameters, times)
 values += np.random.normal(0., 1., values.shape)
 
 # Plot the results
-plt.figure()
-plt.xlabel('Time')
-plt.ylabel('Concentration')
-plt.plot(times, values)
-plt.show()
+#plt.figure()
+#plt.xlabel('Time')
+#plt.ylabel('Concentration')
+#plt.plot(times, values)
+#plt.show()
 
 
 # In[ ]:
