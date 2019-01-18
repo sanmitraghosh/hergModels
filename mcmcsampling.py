@@ -169,9 +169,11 @@ class MCMCSampling(object):
             n_workers = min(self._n_workers, self._chains)
             evaluator = pints.ParallelEvaluator(
                 self._log_pdf, n_workers=n_workers)
+            evaluator_thermo = pints.ParallelEvaluator(
+                self._log_pdf._log_likelihood, n_workers=n_workers)
         else:
             evaluator = pints.SequentialEvaluator(self._log_pdf)
-
+            evaluator_thermo = pints.SequentialEvaluator(self._log_pdf._log_likelihood)
         # Initial phase
         if self._needs_initial_phase:
             for sampler in self._samplers:
@@ -243,7 +245,7 @@ class MCMCSampling(object):
             else:
                 samples = self._samplers[0].tell(fxs)
             if returnLL:
-                LLs.append(evaluator.evaluate(samples))
+                LLs.append(evaluator_thermo.evaluate(samples))
             chains.append(samples)
 
             # Update evaluation count

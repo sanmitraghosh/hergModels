@@ -28,6 +28,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
+import scipy
 #get_ipython().run_line_magic('matplotlib', 'inline')
 
 import pints
@@ -123,7 +124,7 @@ log_prior = pints.ComposedLogPrior(log_prior_a,log_prior_b)
 import mcmcsampling
 from joblib import Parallel, delayed
 import multiprocessing
-niter = 50000
+niter = 30000
 xs = log_prior.sample(1)
 def mcmc_runner(temps):
 
@@ -141,9 +142,8 @@ def mcmc_runner(temps):
     chains, LL = mcmc.run(returnLL=True)
     return chains, LL
 
-temperature = np.array([((i+1)/10)**5 for i in range(10)])
-#np.sort(np.hstack((np.linspace(0,0.1,9),np.linspace(0,0.01,9),np.linspace(0,1,11))))#np.linspace(0.001,1,40)**5#np.unique
-
+temperature = np.unique(np.sort(np.hstack((np.linspace(1e-5,1e-3,10),np.linspace(1e-3,0.01,15),np.linspace(0.01,0.1,9),np.linspace(1e-5,1,11)))))
+print(temperature)
 with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
     
     num_cores = multiprocessing.cpu_count()
@@ -158,29 +158,41 @@ burnin = niter/2
 
 param_chains = np.reshape(results[len(temperature)-1][0][:,burnin:,:],(burnin,2))
 tempered_LLs = np.array([results[i][1] for i in range(len(temperature))]).reshape((len(temperature),niter))
-loglike = tempered_LLs[:,burnin:].T
+untempered_LLs = np.array([tempered_LLs[i,:]/temperature[i] for i in range(len(temperature))])
+loglike = untempered_LLs[:,burnin:].T
+
 #plt.scatter(param_chains[:,0],param_chains[:,1])
 
 
 # In[ ]:
 
 
-def thermo_int(LLs):
+def thermo_int(inp):
 
     ti=temperature
-    Eloglike = np.mean(LLs,axis=0)# E_theta|y,t log[p(y|theta)], integrand for I1
-    print(Eloglike.shape)
-    I_MC = 0.0
+    print('schedule is :',ti)
+    Eloglike_std = np.mean(inp,axis=0)
+    E2loglike_std = np.mean(inp**2,axis=0)
+    Vloglike_std = E2loglike_std - (np.mean(inp,axis=0))**2
+    I_MC = []
+    """
     for i in xrange(len(ti)-1):
-        I_MC += ((Eloglike[i] + Eloglike[i+1])/2 )* (ti[i+1]-ti[i])  
-    return np.exp(I_MC), Eloglike
+        I_MC.append( (0.5*(Eloglike[i] + Eloglike[i+1]))* (ti[i+1]-ti[i]) )
+    """
+    for i in xrange(len(ti)-1):
+
+        I_MC.append( (Eloglike_std[i] + Eloglike_std[i+1])/2 * (ti[i+1]-ti[i]) \
+                - (Vloglike_std[i+1] - Vloglike_std[i])/12 * (ti[i+1]-ti[i])**2  ) 
+    
+    return np.exp(np.sum(I_MC)), Eloglike_std
 
 
 # In[ ]:
-
-
 estimated_marginal_likelihood , yks = thermo_int(loglike)
-#plt.plot(temperature,np.exp(yks))
+plt.plot(temperature,yks)
+plt.ylabel('E|Log Likelihood|')
+plt.xlabel('temperature')
+plt.show()
 
 
 # In[ ]:
