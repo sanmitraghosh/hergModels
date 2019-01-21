@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+
 # coding: utf-8
 
 # # Marginal likelihood of linear regression
@@ -28,6 +28,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
+import scipy
 #get_ipython().run_line_magic('matplotlib', 'inline')
 
 import pints
@@ -61,11 +62,13 @@ values = model.simulate(true_parameters, times)
 values += np.random.normal(0., 1., values.shape)
 
 # Plot the results
-#plt.figure()
-#plt.xlabel('Time')
-#plt.ylabel('Concentration')
-#plt.plot(times, values)
-#plt.show()
+"""
+plt.figure()
+plt.xlabel('Time')
+plt.ylabel('Concentration')
+plt.plot(times, values)
+plt.show()
+"""
 
 
 # In[ ]:
@@ -78,13 +81,13 @@ problem = pints.SingleOutputProblem(model, times, values)
 
 
 class tiLogLikelihood(pints.ProblemLogLikelihood):
-    def __init__(self, problem, sigma, temperature):
+    def __init__(self, problem, sigma, temp):
         super(tiLogLikelihood, self).__init__(problem)
 
         self._no = problem.n_outputs()
         self._np = problem.n_parameters()
         self._nt = problem.n_times()
-        self.temperature = temperature
+        self.temp = temp
         #self._n_parameters = problem.n_parameters()
 
         if np.isscalar(sigma):
@@ -103,7 +106,7 @@ class tiLogLikelihood(pints.ProblemLogLikelihood):
     def __call__(self, x):
         
         error = self._values - self._problem.evaluate(x)
-        return self.temperature * np.sum(self._offset + self._multip * np.sum(error**2, axis=0))
+        return self.temp * np.sum(self._offset + self._multip * np.sum(error**2, axis=0))
 
 
 # In[ ]:
@@ -121,16 +124,17 @@ log_prior = pints.ComposedLogPrior(log_prior_a,log_prior_b)
 import mcmcsampling
 from joblib import Parallel, delayed
 import multiprocessing
-niter = 10000
+niter = 30000
+xs = log_prior.sample(1)
 def mcmc_runner(temps):
 
     nchains = 1
     #print('temperature', temps)
     tempered_log_likelihood = tiLogLikelihood(problem, sigma_noise, temps)
     tempered_log_posterior = pints.LogPosterior(tempered_log_likelihood, log_prior)
-    xs = log_prior.sample(1)
+    
     mcmc = mcmcsampling.MCMCSampling(tempered_log_posterior, nchains, xs,
-                                        method=pints.MetropolisRandomWalkMCMC)
+                                        method=pints.AdaptiveCovarianceMCMC)
     #mcmc.set_log_to_file('log.txt')
     mcmc.set_log_to_screen(False)
     mcmc.set_max_iterations(niter)
@@ -138,9 +142,8 @@ def mcmc_runner(temps):
     chains, LL = mcmc.run(returnLL=True)
     return chains, LL
 
-temperature = np.hstack((np.logspace(-20,-1.59,50)**5,np.linspace(0.2,1,50)**5))
-#np.sort(np.hstack((np.linspace(0,0.1,9),np.linspace(0,0.01,9),np.linspace(0,1,11))))#np.linspace(0.001,1,40)**5#np.unique
-
+temperature = np.unique(np.sort(np.hstack((np.linspace(1e-5,1e-3,10),np.linspace(1e-3,0.01,15),np.linspace(0.01,0.1,9),np.linspace(1e-5,1,11)))))
+print(temperature)
 with np.errstate(all='ignore'):  # Tell numpy not to issue warnings
     
     num_cores = multiprocessing.cpu_count()
@@ -155,43 +158,77 @@ burnin = niter/2
 
 param_chains = np.reshape(results[len(temperature)-1][0][:,burnin:,:],(burnin,2))
 tempered_LLs = np.array([results[i][1] for i in range(len(temperature))]).reshape((len(temperature),niter))
-tempered_LLs = tempered_LLs[:,burnin:].T
-plt.scatter(param_chains[:,0],param_chains[:,1])
+untempered_LLs = np.array([tempered_LLs[i,:]/temperature[i] for i in range(len(temperature))])
+loglike = untempered_LLs[:,burnin:].T
+
+#plt.scatter(param_chains[:,0],param_chains[:,1])
 
 
 # In[ ]:
 
 
-def thermo_int(LLs):
+def thermo_int(inp):
 
     ti=temperature
-    Eloglike = np.mean(LLs,axis=0)# E_theta|y,t log[p(y|theta)], integrand for I1
-    I_MC = 0
+    print('schedule is :',ti)
+    Eloglike_std = np.mean(inp,axis=0)
+    E2loglike_std = np.mean(inp**2,axis=0)
+    Vloglike_std = E2loglike_std - (np.mean(inp,axis=0))**2
+    I_MC = []
+    """
     for i in xrange(len(ti)-1):
-        I_MC += ((Eloglike[i] + Eloglike[i+1])/2 )* (ti[i+1]-ti[i])  
-    return np.exp(I_MC), Eloglike
+        I_MC.append( (0.5*(Eloglike[i] + Eloglike[i+1]))* (ti[i+1]-ti[i]) )
+    """
+    for i in xrange(len(ti)-1):
+
+        I_MC.append( (Eloglike_std[i] + Eloglike_std[i+1])/2 * (ti[i+1]-ti[i]) \
+                - (Vloglike_std[i+1] - Vloglike_std[i])/12 * (ti[i+1]-ti[i])**2  ) 
+    
+    return np.exp(np.sum(I_MC)), Eloglike_std
+
+
+# In[ ]:
+estimated_marginal_likelihood , yks = thermo_int(loglike)
+plt.plot(temperature,yks)
+plt.ylabel('E|Log Likelihood|')
+plt.xlabel('temperature')
+plt.show()
 
 
 # In[ ]:
 
-
-estimated_marginal_likelihood , yks = thermo_int(tempered_LLs)
-plt.plot(temperature,np.exp(yks))
-
-
-# In[ ]:
-
-
+from numpy.linalg import inv
+from numpy import matmul
 import scipy.stats as stats
+
 H=np.vstack((times,np.ones(len(times)))).T
-Cyy = H.dot(np.diag([1.,1])).dot(H.T)
+Cyy = matmul(matmul(H,np.diag([1.,1])),H.T)
 R = np.diag(np.ones(len(times)))
-cov=Cyy + R
-mean = H.dot(np.array([2.,3.]))
+Cov=Cyy + R
+mu = np.dot(H,np.array([2.,3.]))
 v=model.simulate(true_parameters, times)
 vv=H.dot(np.array([2.,3.]))
 np.testing.assert_array_equal(v,vv)
-true_marginal_likelihood = stats.multivariate_normal.pdf(values,mean,cov)
+true_marginal_likelihood = stats.multivariate_normal(mu,Cov).pdf(values)
 print('Estimated Marginal likelihood for model is:', estimated_marginal_likelihood)
 print('True Marginal likelihood for model is:', true_marginal_likelihood)
 
+
+Cuhuh = inv(matmul(matmul(H.T,inv(R)),H)) 
+Cuu = np.diag([1.,1])
+um = np.array([2.,3.])
+ud = inv(H.T.dot(H)).dot(matmul(H.T,values))
+Cudud = inv(inv(Cuhuh) + inv(Cuu))
+uh = Cudud.dot((inv(Cuhuh).dot(ud)) + (inv(Cuu).dot(um)) )
+true_samples = stats.multivariate_normal(uh, Cudud).rvs(burnin)
+plt.subplot(1,2,1)
+plt.title('True')
+plt.scatter(true_samples[:,0],true_samples[:,1])
+plt.xlim([1.5 ,2.5])
+plt.ylim([1 ,5])
+plt.subplot(1,2,2)
+plt.title('MCMC')
+plt.scatter(param_chains[:,0],param_chains[:,1])
+plt.xlim([1.5, 2.5])
+plt.ylim([1, 5])
+plt.show()
