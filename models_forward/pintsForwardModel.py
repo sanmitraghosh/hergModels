@@ -116,6 +116,8 @@ class ForwardModel(pints.ForwardModel):
             ).npview()
         except myokit.SimulationError as e:
             print('Myokit error: ',e)
+            self.simulated_v = times * float('inf')
+            self.simulated_o = times * float('inf')
             return times * float('inf')
 
         # Store membrane potential for debugging
