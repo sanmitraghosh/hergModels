@@ -205,7 +205,18 @@ def fold_plot(protocol, time, voltage, currents, labels=None):
 
 
 def transformer(transform, parameters, rate_dict, logexp=True):
+    """
+    This is a utiltity function to log-transform (and back) parameters to
+    to ease optimisation. Discrepancy parameters are not transformed
+
+    """
     txd_params = np.copy(parameters)
+    
+    last_rate_type = rate_dict[rate_dict.keys()[-1]][-1]
+    if last_rate_type == 'vol_ind':
+        param_len = rate_dict[rate_dict.keys()[-1]][0] + 2 
+    else:
+        param_len = rate_dict[rate_dict.keys()[-1]][1] + 2
     # First the no transform case.
     if transform == 0:
         return txd_params
@@ -220,9 +231,9 @@ def transformer(transform, parameters, rate_dict, logexp=True):
     # Now the Log everything transform case
     elif transform == 2:
         if logexp:
-            txd_params = np.log(txd_params)
+            txd_params[:param_len] = np.log(txd_params[:param_len])
         else:
-            txd_params = np.exp(txd_params)
+            txd_params[:param_len] = np.exp(txd_params[:param_len])
     else:
         Exception(
             'Unrecognised transform type, should be 0=Nothing, 1=LogLinear or 2=LogLog')

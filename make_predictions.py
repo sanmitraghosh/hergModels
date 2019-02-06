@@ -177,4 +177,3 @@ for model_num in range(1,num_models+1):
         np.savetxt(root + '/for-teun-model-' + str(model_num) + '.csv', np.transpose([time, model.simulated_v, sol, model.simulated_o]), delimiter=',')
 
 np.savetxt('predictions/likelihoods-cell-' + str(cell) + '.csv', likelihood_results, delimiter=',')
-

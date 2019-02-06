@@ -1,12 +1,14 @@
 #!/usr/bin/env python2
 #
-# All model to Cell 5 data using CMA-ES
+# Fir a hERG ion channel model to Cell 5 data using CMA-ES
 #
 from __future__ import division, print_function
 import models_forward.pintsForwardModel as forwardModel
 import models_forward.LogPrior as prior
+import models_forward.dsLogLikelihood as dsLogLikelihood
 import models_forward.Rates as Rates
 import models_forward.util as util
+import models_forward.positive_priors as positive_priors
 import os
 import sys
 import pints
@@ -15,7 +17,7 @@ import myokit
 import argparse
 import cPickle
 import matplotlib.pyplot as plt
-
+import time as timer
 
 # Check input arguments
 
@@ -33,7 +35,9 @@ parser.add_argument('--repeats', type=int, default=10, metavar='N',
                     help='number of CMA-ES runs from different initial guesses')
 parser.add_argument('--transform', type=int, default=1, metavar='N',
                     help='Choose between loglog/loglinear parameter transform : 0 for no transform, 1 for loglinear, 2 for loglog')
-parser.add_argument('--plot', type=bool, default=True, metavar='N',
+parser.add_argument('--discrepancy', type=bool, default=False, metavar='N',
+                    help='Run with discrepancy noise')
+parser.add_argument('--plot', type=bool, default=False, metavar='N',
                     help='plot fitted traces')
 args = parser.parse_args()
 
@@ -120,9 +124,22 @@ problem = pints.SingleOutputProblem(model, time, current)
 #
 # Define log-posterior
 #
-log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
-log_prior = prior.LogPrior(
-    rate_dict, lower_conductance, n_params, transform)
+if args.discrepancy:
+    model_inputs = [voltage, current]
+    log_likelihood = dsLogLikelihood.discrepancyLogLikelihood(problem, sigma_noise, model_inputs)
+    log_prior_model_params = prior.LogPrior(rate_dict, lower_conductance, n_params, transform)
+    log_prior_current_ds = pints.NormalLogPrior(0, 1)#
+    log_prior_voltage_ds = pints.NormalLogPrior(0, 1)#
+    log_prior = pints.ComposedLogPrior(log_prior_model_params, log_prior_current_ds, log_prior_voltage_ds)
+    print('Experimental Warning: Running in discrepancy mode')
+    timer.sleep(2.5)    
+else:
+    print('Running in iid noise mode')
+    timer.sleep(2.5)   
+    log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
+    log_prior = prior.LogPrior(
+        rate_dict, lower_conductance, n_params, transform)
+
 log_posterior = pints.LogPosterior(log_likelihood, log_prior)
 rate_checker = Rates.ratesPrior(transform, lower_conductance)
 
@@ -133,23 +150,35 @@ params, scores = [], []
 func_calls = []
 for i in xrange(args.repeats):
     # Choose random starting point
-
-    if i == 0:
-        gary_guess = []
-        for j in xrange(int(n_params/2)):
-            gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
-            gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
-        gary_guess.append(2*lower_conductance)
-
-        x0 = np.array(gary_guess)
+    if args.discrepancy:
+                x01 = log_prior_model_params.sample().reshape((9,1))
+                x02 = log_prior_current_ds.sample()
+                x03 = log_prior_voltage_ds.sample()
+                x0 = np.concatenate((x01,x02,x03),axis=0)
     else:
-        x0 = log_prior.sample()
+        if i == 0:
+            gary_guess = []
+            for j in xrange(int(n_params/2)):
+                gary_guess.append(2e-3)  # A parameter [in A*exp(+/-B*V)]
+                gary_guess.append(0.05)  # B parameter [in A*exp(+/-B*V)]
+            gary_guess.append(2*lower_conductance)
+            x0 = np.array(gary_guess)
+        else:
+            x0 = log_prior.sample()
+     
     print('Initial guess (untransformed model parameters) = ', x0)
 
     # Create optimiser and log transform parameters
+    # NB: The discrepancy parameters for transform 1 doesn't get transformed
     x0 = util.transformer(transform, x0, rate_dict, True)
     boundaries = rate_checker._get_boundaries(rate_dict)
-    Boundaries = pints.RectangularBoundaries(boundaries[0], boundaries[1])
+    
+    if args.discrepancy:
+        bond0_ds = np.hstack((boundaries[0],np.ones(2)*-100))
+        bond1_ds = np.hstack((boundaries[1],np.ones(2)*100)) # Bounding to a large-ish number
+        Boundaries = pints.RectangularBoundaries(bond0_ds, bond1_ds)
+    else:
+        Boundaries = pints.RectangularBoundaries(boundaries[0], boundaries[1])
 
     print('Initial guess LogLikelihood = ', log_likelihood(x0))
     print('Initial guess LogPrior = ',      log_prior(x0))
@@ -159,7 +188,7 @@ for i in xrange(args.repeats):
     opt = pints.Optimisation(
         log_posterior, x0, boundaries=Boundaries, method=pints.CMAES)
     opt.set_max_iterations(None)
-    opt.set_parallel(True)
+    opt.set_parallel(False)
     log_filename = model_name + '_cell_' + \
         str(cell) + '_transform_' + str(transform) + \
         '_cmaes_run_' + str(i) + '.log'
@@ -209,23 +238,35 @@ obtained_log_likelihood = log_likelihood(transformed_best_params)
 print('Log likelihood for best parameter set is: ', obtained_log_likelihood)
 
 root = os.path.abspath('cmaes_results')
-cmaes_filename = os.path.join(
-    root, model_name + '-cell-' + str(cell) + '-cmaes.txt')
+if args.discrepancy:
+    cmaes_filename = os.path.join(
+        root, model_name + '-cell-' + str(cell) + '-cmaes_ds.txt')
+else:
+    cmaes_filename = os.path.join(
+        root, model_name + '-cell-' + str(cell) + '-cmaes.txt')
 
-write_out_results = False
+
+write_out_results = True
+
+""" 
+Verify this bit of code later
 
 # Check to see if we have done a minimisation before
 if os.path.isfile(cmaes_filename):
     previous_params = np.loadtxt(cmaes_filename)
-    # Check what likelihood that was
-    transformed_best_params = util.transformer(transform, previous_params, rate_dict, True)
-    previous_best = log_likelihood(transformed_best_params)
-    print('Previous best log likelihood was: ', previous_best)
-    if obtained_log_likelihood > previous_best:
-        print('Overwriting previous results')
+    if len(previous_params) != len(obtained_parameters):
         write_out_results = True
+    else:
+        # Check what likelihood that was
+        transformed_best_params = util.transformer(transform, previous_params, rate_dict, True)
+        previous_best = log_likelihood(transformed_best_params)
+        print('Previous best log likelihood was: ', previous_best)
+        if obtained_log_likelihood > previous_best:
+            print('Overwriting previous results')
+            write_out_results = True
 else:
     write_out_results = True
+"""
 
 if write_out_results:
     with open(cmaes_filename, 'w') as f:
@@ -250,7 +291,7 @@ if args.plot and write_out_results:
 
     a1.plot(time, current, label='real', lw=0.5)
     a1.plot(time, model.simulate(util.transformer(
-        transform, obtained_parameters, rate_dict, True), time), label='fit', lw=0.5)
+        transform, obtained_parameters[:-2], rate_dict, True), time), label='fit', lw=0.5)
     a1.legend(loc='lower right')
     a1.set_xlabel('Time (ms)')
     a1.set_ylabel('Current (nA)')

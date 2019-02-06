@@ -108,7 +108,7 @@ class ratesPrior(object):
 
     def check_rates(self, rates_dict, parameters):
         # Always operates on the model (untransformed) parameters.
-        debug = True
+        debug = False
         # Check parameter boundaries
         for names, rate in rates_dict.iteritems():
 

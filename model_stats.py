@@ -23,6 +23,13 @@ import matplotlib.pyplot as plt
 # Load a hERG model and prior
 
 # Check input arguments
+
+parser = argparse.ArgumentParser(
+    description='Find statistics/information criteria of all models')
+
+parser.add_argument('--burnin', type=int, default=70000, metavar='N',
+                    help='number of burn-in samples')
+args = parser.parse_args()
 class log_posterior_pointwise(object):
     def __init__(self, _problem, _current, _sigma):
         self._problem = _problem
@@ -104,23 +111,23 @@ def rmse_opt(model, parameters, current, time):
     return np.sqrt(((current - mean_values) ** 2).mean())
     
 
-def norm_const(samples):
+def thermo_int(likelihoods, temperatures, print_schedule = False):
+    # This function carries out the thermodynamic integration with
+    # the Friel correction
+    ti=temperatures
+    if print_schedule:
+        print('The temperature schedule is :',ti)
+    Eloglike_std = np.mean(likelihoods,axis=0)
+    E2loglike_std = np.mean(likelihoods**2,axis=0)
+    Vloglike_std = E2loglike_std - (np.mean(likelihoods,axis=0))**2
+    I_MC = []
 
-    #ti=np.linspace(0,1,10)**5
-    ti = np.array([1.69350878e-05, 5.41922810e-04, 4.11522634e-03,
-       1.73415299e-02, 5.29221494e-02, 1.31687243e-01, 2.84628021e-01,
-       5.54928957e-01, 1.00000000e+00])
-    Eloglike_std = np.mean(samples[:,npar:],axis=0)
-    E2loglike_std = np.mean(samples[:,npar:]**2,axis=0)
-    Vloglike_std = E2loglike_std - (np.mean(samples[:,npar:],axis=0))**2
-
-    I_MC = 0
     for i in xrange(len(ti)-1):
 
-        I_MC += (Eloglike_std[i] + Eloglike_std[i+1])/2 * (ti[i+1]-ti[i]) \
-                - (Vloglike_std[i+1] - Vloglike_std[i])/12 * (ti[i+1]-ti[i])**2
-    return I_MC
-
+        I_MC.append( (Eloglike_std[i] + Eloglike_std[i+1])/2 * (ti[i+1]-ti[i]) \
+                - (Vloglike_std[i+1] - Vloglike_std[i])/12 * (ti[i+1]-ti[i])**2  ) 
+    
+    return np.sum(I_MC)
 
 parser = argparse.ArgumentParser(description='Fit all the hERG models to sine wave data')
 parser.add_argument('--cell', type=int, default=5, metavar='N', \
@@ -160,7 +167,7 @@ del(log_ap)
 protocol_ap = [time_ap, voltage_ap]
 
 model_ppc_tarces = []
-#ikr_names = ['Beattie', 'C-O-I','C-C-O-I','C-C-C-O-I']
+
 if args.mcmc:
     model_metrics = np.zeros((30,7))
 else:
@@ -213,9 +220,11 @@ for i in xrange(30):
         root = os.path.abspath('mcmc_results')
         param_filename = os.path.join(root, model_name +'-cell-' + str(cell) + '-mcmc_traces.p')
         trace = cPickle.load(open(param_filename, 'rb'))
+        likelihood_filename = os.path.join(root, model_name + '-cell-' + str(cell) + '-mcmc_lls.p')
+        loglike = cPickle.load(open(likelihood_filename, 'rb'))
 
-        
-        burnin = 70000
+
+        burnin = args.burnin
         points = burnin/args.points
         samples_all_chains = trace[:, burnin:, :]
         sample_chain_1 = samples_all_chains[0]
@@ -225,17 +234,16 @@ for i in xrange(30):
         
         waic_train = waic(problem_sine, samples_waic, current_sine, sigma_noise_sine)[0]
         aic_ppc, bic_ppc =aic_bic(sample_chain_1, current_sine)
-        log_Z = norm_const(sample_chain_1)
+        log_Z = thermo_int(loglike, np.logspace(-3, 0, 8))
         rmse_sine = rmse(model, samples_rmse, current_sine, time_sine)
-        #print(aic_ppc)
-        
         waic_test = waic(problem_ap, samples_waic, current_ap, sigma_noise_ap)[0]
         rmse_ap = rmse(model_ap, samples_rmse, current_ap, time_ap)
-        #print(bic_ppc)
+        
         model_metrics[i,:] = [ waic_train, aic_ppc, bic_ppc, log_Z, rmse_sine, waic_test, rmse_ap]
+        
     else:
         
-        print(model_name+': stats written')
+        
         parameters = forwardModel.fetch_parameters(model_name, cell)
         max_log_likelihood_train = log_likelihood(parameters)
         max_log_likelihood_ap = log_likelihood_ap(parameters)
@@ -245,6 +253,8 @@ for i in xrange(30):
         aic_opt_ap, bic_opt_ap =aic_bic_opt(max_log_likelihood_ap, parameters)
         model_metrics[i,:] = [ max_log_likelihood_train, aic_opt_train, bic_opt_train, rmse_opt_train, 
                                max_log_likelihood_ap, aic_opt_ap, bic_opt_ap, rmse_opt_ap]
+    
+    print(model_name+' : stats written')
     
 
 outfile = './figures/model_metrics.txt'
