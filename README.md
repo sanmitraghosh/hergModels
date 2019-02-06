@@ -12,7 +12,10 @@ This is the rough order of operation.
 In non iid (discrepancy mode) use this:
 
 `python2 cmaesfit.py --discrepancy True`
-
+ 
+ By default we use a log-linear transform, and this can be changed using the option `--transform`, see the `cmaesfit.py` file for more details. NB: the discrepancy noise parameters are not transformed for any choice of transforming the ion channel parameters.
+ TODO: Figure out good transform for the discrepancy parameters.
+ 
 2. [Optional] Run `sinemcmc.py` to run MCMC chains from the best locations. THIS CAN TAKE A WHILE (days!). As the CMA-ES optimisation this also has two noise models, so either run:
 For iid noise:
 
