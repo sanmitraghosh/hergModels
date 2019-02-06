@@ -30,6 +30,6 @@ Finally, if you want to calculate the marginal likelihood using thermodynamic in
 
 `python2 sinemcmc.py --thermo True`
 
-The above command runs MCMC chains at different temperatures to sample from power posteriors. You can control the number of temperatures (NB increasing this will increase run time) with the option `--ntemps` . See the file `sinemcmc.py` file for other options.
+The above command runs MCMC chains at different temperatures to sample from power posteriors. You can control the number of temperatures (NB increasing this will increase run time) with the option `--ntemps`. See the file `sinemcmc.py` file for other options.
 
 3. Run `make_predictions.py` which will print out the likelihood of the best sine wave fits seen in either CMA-ES or MCMC, and the action potential predictions for these parameter sets.
