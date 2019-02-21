@@ -21,11 +21,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 # Check input arguments
-
 parser = argparse.ArgumentParser(
     description='Make AP predictions based on the CMAES fit to sine wave data')
-parser.add_argument('--cell', type=int, default=5, metavar='N',
+parser.add_argument('-c','--cell', type=int, default=5, metavar='N',
                     help='cell number : 1, 2, ..., 5')
+parser.add_argument('--shading', dest='shading', action='store_true',help='switch on error shading in the back of prediction plots (default)')
+parser.add_argument('--no-shading', dest='shading', action='store_false',help='switch off error shading in the back of prediction plots')
+parser.set_defaults(shading=True)
 args = parser.parse_args()
 
 protocols = ['sine-wave','ap','original-sine'] # Keep sine wave first to get good sigma estimate, and load params properly
@@ -37,6 +39,8 @@ cmap = plt.cm.get_cmap(err_map)
 cmap1_reversed = plt.cm.get_cmap(err_map + '_r')
 
 cell = args.cell
+
+print('Processing cell #', cell, ' with error shading = ', args.shading)
 
 likelihood_results = np.loadtxt('predictions/likelihoods-cell-' + str(cell) + '.csv', delimiter=',')
 
@@ -123,26 +127,20 @@ for model_num in range(1,num_models+1):
         
         # Now load up the predictions from 'make_predictions.py'
 
-
-
-        N = 100 # Number of time points in each windows
-        error_measure = (current-sol)*np.sign(current)
-        num_windows = int(len(error_measure)/N)
-        windowed_error = np.zeros(num_windows)
-        for i in range(0, num_windows):
-                windowed_error[i] = np.mean(error_measure[N*i:N*i+N-1]) # in nA
-        #max_err = max(windowed_error)
-        #min_err = min(windowed_error)
-        #biggest_err = max([max_err, abs(min_err)])
-        #windowed_error /= biggest_err # Scale to be in [-1,1] for colormaps to show strong results
-        # (it should be [-0.5,0.5] to give a min of zero and max of one, but this shows peaks but not most of trace...)
-        #print('Error measure rescaled to be in [',min(error_measure),',',max(error_measure),'].')
-
+        if args.shading:
+                N = 100 # Number of time points in each windows
+                error_measure = (current-sol)*np.sign(current)
+                num_windows = int(len(error_measure)/N)
+                windowed_error = np.zeros(num_windows)
+                for i in range(0, num_windows):
+                        windowed_error[i] = np.mean(error_measure[N*i:N*i+N-1]) # in nA
+                
+                for i in range(0, num_windows):
+                        # There are 4 voltage axes then each models' axis in turn, so start at axes[4] for model 1.
+                        model_axes[model_num+3].axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
         
-        
-        for i in range(0, num_windows):
-                # There are 4 voltage axes then each models' axis in turn, so start at axes[4] for model 1.
-                model_axes[model_num+3].axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
+
+
         model_axes[model_num+3].plot([time[0], time[-1]],[0, 0],'k-',lw=0.5)
         model_axes[model_num+3].set_ylim(0, 1)
         
@@ -161,8 +159,9 @@ for model_num in range(1,num_models+1):
                         lw=0.5, label='predicted', alpha=0.1)
                 plt.ylabel('Current (nA)')
                 plt.xlim(0, 8000)
-                for i in range(0, num_windows):
-                        plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
+                if args.shading:
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                 plt.subplot(4, 1, 3)
                 plt.plot(time, current, '-', color=measured_colour,
@@ -172,8 +171,9 @@ for model_num in range(1,num_models+1):
                 plt.ylabel('Current (nA)')
                 plt.xlim(500, 8000)
                 plt.ylim(-0.5, 1.5)
-                for i in range(0, num_windows):
-                        plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
+                if args.shading:
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                 plt.subplot(4, 1, 4)
                 plt.plot(time, current, '-', color=measured_colour,
@@ -184,21 +184,22 @@ for model_num in range(1,num_models+1):
                 plt.xlabel('Time (ms)')
                 plt.legend(loc='upper right')
                 plt.xlim(4000, 4500)
-                for i in range(0, num_windows):
-                        plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
+                if args.shading:
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                 plt.ylim(0, 6) # nA
 
-
-                # Squeeze in a colorbar axis
-                plt.subplots_adjust(bottom=0.065, left=0.08, right=0.85, top=0.98)
-                cax = plt.axes([0.88, 0.065, 0.02, 0.68])
-                norm = mpl.colors.Normalize(vmin=-1, vmax=1)
-                cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
-                ticks = [-1,0,1]
-                cb1.set_ticks(ticks)
-                cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
-                cb1.set_label('Error', labelpad=-20)    
+                if args.shading:
+                        # Squeeze in a colorbar axis
+                        plt.subplots_adjust(bottom=0.065, left=0.08, right=0.85, top=0.98)
+                        cax = plt.axes([0.88, 0.065, 0.02, 0.68])
+                        norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+                        cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
+                        ticks = [-1,0,1]
+                        cb1.set_ticks(ticks)
+                        cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
+                        cb1.set_label('Error', labelpad=-20)    
 
                 plt.savefig(fig_filename)
                 plt.close(fig)
@@ -217,22 +218,24 @@ for model_num in range(1,num_models+1):
                 else:
                         label_text = 'predicted'
                 a1.plot(time, sol, label=label_text, color=model_colour, lw=0.5)
-                for i in range(0, num_windows):
-                        plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
+                if args.shading:
+                        for i in range(0, num_windows):
+                                plt.axvspan(time[N*i],time[N*i+N-1], facecolor=cmap(0.5+2*windowed_error[i]), alpha=0.5)
 
                 a1.legend(loc='lower right')
                 a1.set_xlabel('Time (ms)')
                 a1.set_ylabel('Current (nA)')
 
-                # Squeeze in a colorbar axis
-                plt.subplots_adjust(bottom=0.1, left=0.12, right=0.85, top=0.95)
-                cax = plt.axes([0.86, 0.1, 0.02, 0.515])
-                norm = mpl.colors.Normalize(vmin=-1, vmax=1)
-                cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
-                ticks = [-1,0,1]
-                cb1.set_ticks(ticks)
-                cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
-                cb1.set_label('Error', labelpad=-20)    
+                if args.shading:
+                        # Squeeze in a colorbar axis
+                        plt.subplots_adjust(bottom=0.1, left=0.12, right=0.85, top=0.95)
+                        cax = plt.axes([0.86, 0.1, 0.02, 0.515])
+                        norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+                        cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap1_reversed, norm=norm, orientation='vertical')
+                        ticks = [-1,0,1]
+                        cb1.set_ticks(ticks)
+                        cb1.set_ticklabels(['-0.25nA','0','+0.25nA'])
+                        cb1.set_label('Error', labelpad=-20)    
 
                 plt.savefig(fig_filename)   # save the figure to file
                 plt.close(fig)
