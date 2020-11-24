@@ -136,7 +136,7 @@ if args.discrepancy:
 else:
     print('Running in iid noise mode')
     timer.sleep(2.5)   
-    log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
+    log_likelihood = pints.GaussianKnownSigmaLogLikelihood(problem, sigma_noise)
     log_prior = prior.LogPrior(
         rate_dict, lower_conductance, n_params, transform)
 

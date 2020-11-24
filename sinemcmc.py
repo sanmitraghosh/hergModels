@@ -221,7 +221,7 @@ else:
     else:
         print('Running in iid noise mode')
         timer.sleep(2.5) 
-        log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
+        log_likelihood = pints.GaussianKnownSigmaLogLikelihood(problem, sigma_noise)
 
     # And posterior
     log_posterior = pints.LogPosterior(log_likelihood, log_prior)

@@ -206,8 +206,8 @@ for i in xrange(30):
     #
     # Define log-posterior
     #
-    log_likelihood = pints.KnownNoiseLogLikelihood(problem_sine, sigma_noise_sine)
-    log_likelihood_ap = pints.KnownNoiseLogLikelihood(problem_ap, sigma_noise_ap)
+    log_likelihood = pints.GaussianKnownSigmaLogLikelihood(problem_sine, sigma_noise_sine)
+    log_likelihood_ap = pints.GaussianKnownSigmaLogLikelihood(problem_ap, sigma_noise_ap)
     log_prior = prior.LogPrior(
         rate_dict, lower_conductance, npar, transform)
     log_posterior = pints.LogPosterior(log_likelihood, log_prior)

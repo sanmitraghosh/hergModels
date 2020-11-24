@@ -134,7 +134,7 @@ for model_num in range(1,num_models+1):
         #
         # Define log-posterior
         #
-        log_likelihood = pints.KnownNoiseLogLikelihood(problem, sigma_noise)
+        log_likelihood = pints.GaussianKnownSigmaLogLikelihood(problem, sigma_noise)
         log_prior = prior.LogPrior(
                 rate_dict, lower_conductance, n_params, transform)
         log_posterior = pints.LogPosterior(log_likelihood, log_prior)
