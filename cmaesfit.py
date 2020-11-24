@@ -185,7 +185,7 @@ for i in xrange(args.repeats):
     print('Initial guess LogPosterior = ',  log_posterior(x0))
 
     print('Initial guess (transformed optimisation parameters) = ', x0)
-    opt = pints.Optimisation(
+    opt = pints.OptimisationController(
         log_posterior, x0, boundaries=Boundaries, method=pints.CMAES)
     opt.set_max_iterations(None)
     opt.set_parallel(False)
