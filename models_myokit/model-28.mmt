@@ -64,8 +64,8 @@ dot(C2) = b2*C1 + a1*C3 +ah*IC2 - C2*(a2 + b1 + bh)
 dot(C1) = b3*O + a2*C2 + ah*IC1 - C1*(a3 + b2 + bh)
 dot(O) = ah*I + a3*C1 - O*(b3 + bh)
 dot(I) = bh*O + a6*IC1 - I*(ah + b6)
-dot(IC1) = b6*I + a5*IC2 + ah*C1 - IC1*(a6 + ah + b5)
-dot(IC2) = b5*IC1 + a4*IC3 + ah*C2 - IC2*(a5 + ah + b4)
+dot(IC1) = b6*I + a5*IC2 + bh*C1 - IC1*(a6 + ah + b5)
+dot(IC2) = b5*IC1 + a4*IC3 + bh*C2 - IC2*(a5 + ah + b4)
 dot(IC3) = a8*IC4 + bh*C3 + b4*IC2 - IC3*(ah + a4 + b8)
 
 p1 = 2.26e-4 [1/ms]
